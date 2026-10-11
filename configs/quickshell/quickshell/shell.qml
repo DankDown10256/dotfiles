@@ -16,7 +16,7 @@ Scope {
     ControlCenter {
         id: controlCenter
     }
-
+    
     // --- palette ---
     readonly property color bg: "#1f1612"      // brun très sombre
     readonly property color fg: "#f0e6d8"      // crème chaud

@@ -23,12 +23,15 @@ Scope {
     property int pomoMinutes: 25
     property int pomoSeconds: 0
     property bool pomoRunning: false
-    property bool pomoIsWork: true // true = Focus, false = Pause
+    property bool pomoIsWork: true
 
     // --- State DND ---
     property bool dndActive: false
 
-    // IPC Handler pour Hyprland
+    // --- State AI Dev Detector ---
+    property bool aiActive: false
+    property string aiToolName: ""
+
     IpcHandler {
         target: "controlcenter"
         function toggle() {
@@ -43,7 +46,6 @@ Scope {
         }
     }
 
-    // Utilisateur
     Process {
         id: userProc
         running: true
@@ -55,7 +57,6 @@ Scope {
         }
     }
 
-    // Wifi
     Process {
         id: wifiProc
         running: true
@@ -73,6 +74,35 @@ Scope {
         }
     }
 
+    // Détection des outils de dev IA (opencode, claude, codex)
+    Process {
+        id: aiDetectorProc
+        command: ["sh", "-c", "pgrep -af 'opencode|claude|codex' || true"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let output = text.trim()
+                if (output.length > 0) {
+                    root.aiActive = true
+                    if (output.includes("opencode")) root.aiToolName = "Opencode"
+                    else if (output.includes("claude")) root.aiToolName = "Claude Code"
+                    else if (output.includes("codex")) root.aiToolName = "Codex"
+                    else root.aiToolName = "Assistant IA"
+                } else {
+                    root.aiActive = false
+                    root.aiToolName = ""
+                }
+            }
+        }
+    }
+
+    Timer {
+        interval: 3000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: aiDetectorProc.running = true
+    }
+
     QtObject {
         id: wifiInfo
         property string ssid: "Non connecté"
@@ -83,7 +113,6 @@ Scope {
         property string username: "dev"
     }
 
-    // Timer du Pomodoro
     Timer {
         id: pomoTimer
         interval: 1000
@@ -96,7 +125,6 @@ Scope {
                 root.pomoMinutes--
                 root.pomoSeconds = 59
             } else {
-                // Fin de session
                 root.pomoIsWork = !root.pomoIsWork
                 root.pomoMinutes = root.pomoIsWork ? 25 : 5
                 root.pomoSeconds = 0
@@ -106,7 +134,6 @@ Scope {
         }
     }
 
-    // Timer de fermeture pour la transition de sortie
     Timer {
         id: closeTimer
         interval: 380
@@ -121,7 +148,7 @@ Scope {
         PanelWindow {
             id: panel
             width: 420
-            height: 560
+            height: 610
 
             anchors {
                 bottom: true
@@ -130,7 +157,7 @@ Scope {
 
             margins {
                 right: root.alive ? 16 : -440
-                bottom: root.alive ? 16 : -580
+                bottom: root.alive ? 16 : -630
             }
 
             color: "transparent"
@@ -191,12 +218,44 @@ Scope {
                         }
                     }
 
+                    // ---------- Widget Détection IA (Conditionnel) ----------
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 45
+                        color: root.colSurface
+                        radius: 10
+                        visible: root.aiActive
+                        border.color: root.colAccent
+                        border.width: 1
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 10
+
+                            Text {
+                                text: "\uF121" // Code bracket
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 16
+                                color: root.colAccent
+                            }
+
+                            Text {
+                                text: root.aiToolName + " est en train de travailler..."
+                                font.pixelSize: 12
+                                font.bold: true
+                                color: root.colText
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+
                     // ---------- Ligne DND & Pomodoro Quick Controls ----------
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
 
-                        // Button DND
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 50
@@ -207,7 +266,7 @@ Scope {
                                 anchors.centerIn: parent
                                 spacing: 8
                                 Text {
-                                    text: "\uF1F8" // Bell Slash
+                                    text: "\uF1F8"
                                     font.family: "JetBrainsMono Nerd Font"
                                     font.pixelSize: 16
                                     color: root.dndActive ? root.colBg : root.colText
@@ -224,13 +283,11 @@ Scope {
                                 anchors.fill: parent
                                 onClicked: {
                                     root.dndActive = !root.dndActive
-                                    // Commande dnd externe (dunstctl / swaync)
                                     Quickshell.execDetached(["dunstctl", "set-paused", root.dndActive ? "true" : "false"])
                                 }
                             }
                         }
 
-                        // Status Pomodoro
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 50
@@ -241,7 +298,7 @@ Scope {
                                 anchors.centerIn: parent
                                 spacing: 8
                                 Text {
-                                    text: "\uF2F2" // Timer icon
+                                    text: "\uF2F2"
                                     font.family: "JetBrainsMono Nerd Font"
                                     font.pixelSize: 16
                                     color: root.pomoRunning ? root.colAccent : root.colMuted
@@ -257,6 +314,13 @@ Scope {
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: root.pomoRunning = !root.pomoRunning
+                                // Double-clic pour réinitialiser le pomodoro à 25:00
+                                onDoubleClicked: {
+                                    root.pomoRunning = false
+                                    root.pomoIsWork = true
+                                    root.pomoMinutes = 25
+                                    root.pomoSeconds = 0
+                                }
                             }
                         }
                     }
@@ -283,13 +347,12 @@ Scope {
                                 }
                                 Item { Layout.fillWidth: true }
                                 Text {
-                                    text: root.pomoRunning ? "En cours" : "En pause"
+                                    text: root.pomoRunning ? "En cours (Double-clic pour reset)" : "En pause"
                                     font.pixelSize: 10
                                     color: root.colMuted
                                 }
                             }
 
-                            // Barre de progression Pomodoro
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 6
@@ -454,7 +517,6 @@ Scope {
                         Layout.fillWidth: true
                         spacing: 10
 
-                        // Verrouiller
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 40
@@ -462,7 +524,7 @@ Scope {
                             radius: 10
                             Text {
                                 anchors.centerIn: parent
-                                text: "\uF023" // Lock
+                                text: "\uF023"
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 14
                                 color: root.colText
@@ -473,7 +535,6 @@ Scope {
                             }
                         }
 
-                        // Déconnexion
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 40
@@ -481,7 +542,7 @@ Scope {
                             radius: 10
                             Text {
                                 anchors.centerIn: parent
-                                text: "\uF08B" // Logout
+                                text: "\uF08B"
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 14
                                 color: root.colText
@@ -492,7 +553,6 @@ Scope {
                             }
                         }
 
-                        // Redémarrer
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 40
@@ -500,7 +560,7 @@ Scope {
                             radius: 10
                             Text {
                                 anchors.centerIn: parent
-                                text: "\uF01E" // Reboot
+                                text: "\uF01E"
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 14
                                 color: root.colText
@@ -511,7 +571,6 @@ Scope {
                             }
                         }
 
-                        // Éteindre
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 40
@@ -519,7 +578,7 @@ Scope {
                             radius: 10
                             Text {
                                 anchors.centerIn: parent
-                                text: "\uF011" // Power off
+                                text: "\uF011"
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 14
                                 color: root.colBg
