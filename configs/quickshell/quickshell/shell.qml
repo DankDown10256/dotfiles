@@ -19,10 +19,41 @@ Scope {
     readonly property color warn: "#e5534b"    // rouge brique
 
     // --- audio ---
-    readonly property var sink: Pipewire.defaultAudioSink
-    readonly property int volume: sink?.audio ? Math.round(sink.audio.volume * 100) : 0
-    readonly property bool muted: sink?.audio ? sink.audio.muted : false
-    PwObjectTracker { objects: [root.sink] }
+    property int volume: 0
+    property bool muted: false
+
+    Process {
+      id: audioReader
+      command: ["env", "LC_ALL=C", "sh", "-c",
+        "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@"]
+      stdout: StdioCollector {
+          onStreamFinished: {
+            const vol = text.match(/(\d+)%/)
+            if (vol) root.volume = parseInt(vol[1])
+            const mute = text.match(/Mute:\s*(yes|no)/)
+            if (mute) root.muted = mute[1] === "yes"
+          }
+      }
+    }
+
+    Timer {
+      id: audioDebounce
+      interval: 50
+      onTriggered: if (!audioReader.running) audioReader.running = true
+    }
+
+    Process {
+      running: true
+      command: ["pactl", "subscribe"]
+      stdout: SplitParser {
+          onRead: data => {
+              if (data.includes("sink") || data.includes("server"))
+                audioDebounce.restart()
+          }
+      }
+    }
+
+    Component.onCompleted: audioReader.running = true
 
     // --- wifi (nmcli, polling) ---
     property bool wifiUp: false
