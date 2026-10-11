@@ -11,18 +11,55 @@ import QtQuick.Layouts
 Scope {
     id: root
 
+    Launcher {}
+    
+    ControlCenter {
+        id: controlCenter
+    }
+    
     // --- palette ---
-    readonly property color bg: "#11111b"
-    readonly property color fg: "#cdd6f4"
-    readonly property color dim: "#585b70"
-    readonly property color accent: "#89b4fa"
-    readonly property color warn: "#f38ba8"
+    readonly property color bg: "#1f1612"      // brun très sombre
+    readonly property color fg: "#f0e6d8"      // crème chaud
+    readonly property color dim: "#7a6657"     // brun-gris atténué
+    readonly property color accent: "#d97757"  // orange terracotta
+    readonly property color warn: "#e5534b"    // rouge brique
 
     // --- audio ---
-    readonly property var sink: Pipewire.defaultAudioSink
-    readonly property int volume: sink?.audio ? Math.round(sink.audio.volume * 100) : 0
-    readonly property bool muted: sink?.audio ? sink.audio.muted : false
-    PwObjectTracker { objects: [root.sink] }
+    property int volume: 0
+    property bool muted: false
+
+    Process {
+      id: audioReader
+      command: ["env", "LC_ALL=C", "sh", "-c",
+        "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@"]
+      stdout: StdioCollector {
+          onStreamFinished: {
+            const vol = text.match(/(\d+)%/)
+            if (vol) root.volume = parseInt(vol[1])
+            const mute = text.match(/Mute:\s*(yes|no)/)
+            if (mute) root.muted = mute[1] === "yes"
+          }
+      }
+    }
+
+    Timer {
+      id: audioDebounce
+      interval: 50
+      onTriggered: if (!audioReader.running) audioReader.running = true
+    }
+
+    Process {
+      running: true
+      command: ["pactl", "subscribe"]
+      stdout: SplitParser {
+          onRead: data => {
+              if (data.includes("sink") || data.includes("server"))
+                audioDebounce.restart()
+          }
+      }
+    }
+
+    Component.onCompleted: audioReader.running = true
 
     // --- wifi (nmcli, polling) ---
     property bool wifiUp: false
@@ -87,7 +124,7 @@ Scope {
             screen: modelData
 
             anchors { top: true; bottom: true; left: true }
-            implicitWidth: 48
+            implicitWidth: 40
             exclusiveZone: implicitWidth
             color: root.bg
 
@@ -123,6 +160,29 @@ Scope {
                             anchors.fill: parent
                             onClicked: Hyprland.dispatch("workspace " + ws.wsId)
                         }
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+
+                // ---------- active window title (vertical text or rotated) ----------
+                Item {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.maximumHeight: 200
+                    visible: Hyprland.focusedWindow !== null && Hyprland.focusedWindow.title.length > 0
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: Hyprland.focusedWindow ? Hyprland.focusedWindow.title : ""
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: root.dim
+                        elide: Text.ElideRight
+                        // Rotation pour s'adapter proprement à la barre verticale étroite (40px)
+                        rotation: -90
+                        width: 160
+                        horizontalAlignment: Text.AlignHCenter
                     }
                 }
 
@@ -201,11 +261,11 @@ Scope {
                     }
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: if (root.sink?.audio) root.sink.audio.muted = !root.sink.audio.muted
+                        onClicked: Quickshell.execDetached(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"])
                         onWheel: wheel => {
-                            if (!root.sink?.audio) return;
-                            const d = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                            root.sink.audio.volume = Math.max(0, Math.min(1, root.sink.audio.volume + d));
+                            const d = wheel.angleDelta.y > 0 ? "+5%" : "-5%";
+                            Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", d]);
+                            audioDebounce.restart();
                         }
                     }
                 }

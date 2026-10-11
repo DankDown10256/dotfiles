@@ -8,7 +8,7 @@ It is designed and tested on **Artix Linux**, but there is nothing Artix-specifi
 
 - **Keyboard first.** Everything is reachable without touching the mouse: launcher, notifications, workspaces, window management, screenshots, volume, brightness.
 - **Fast and lightweight.** No compositor gimmicks, no heavy widget toolkits, no autostart junk. Blur and animations are subtle and can be killed instantly with `blitz-mode.sh`.
-- **Developer oriented.** Foot + Fish as the daily driver, Kitty kept as a full-featured alternative, a control center with a built-in Pomodoro timer, and a coding-agent indicator that tells you when Claude, OpenCode, or Codex is working in the background.
+- **Developer oriented.** Kitty + Fish as the daily driver, Foot kept as a minimal alternative, Zed one `Super + B` away, a control center with a built-in Pomodoro timer, and a coding-agent indicator that tells you when Claude, OpenCode, or Codex is working in the background.
 - **Flat and dark.** Terracotta/cream accent, JetBrainsMono Nerd Font everywhere, consistent across every component.
 
 ## Included configuration
@@ -16,47 +16,49 @@ It is designed and tested on **Artix Linux**, but there is nothing Artix-specifi
 | Component | Configuration |
 | --- | --- |
 | Hyprland | French layout, i3-style tiling and navigation, master layout, subtle blur, animated transitions, window rules, shaders |
+| Quickshell | Default shell: vertical bar, app launcher, control center, and a notification popup component |
 | Hypridle | Locks the session after 10 minutes and before sleep |
 | Hyprlock | Blurred session screenshot, clock, date, identity, password field |
-| Foot | Default terminal: Fish shell, dark palette, 10k scrollback, block cursor, no blinking |
+| Kitty | Default terminal: JetBrainsMono Nerd Font, dark palette, tabs, scrollback |
+| Foot | Minimal alternative terminal: Fish shell, dark palette, 10k scrollback, block cursor, no blinking |
 | Fish | Minimal config: quiet greeting, `l` alias, Copilot completions |
-| Kitty | Alternative terminal: JetBrainsMono Nerd Font, dark palette, tabs, scrollback |
-| Quickshell | Vertical bar, control center, app launcher, and notification popups |
-| Waybar | Workspaces, clock, network, volume, memory, and battery |
-| Rofi | App launcher, main menu, power menu, wallpaper and theme selectors, gruvbox themes |
-| SwayNC | Top-centered notification center with grouping and Do Not Disturb |
+| SwayNC | Notification daemon started at login: grouping and Do Not Disturb |
+| Rofi | Main menu (`Super + Alt + Space`): applications, Wi-Fi, configuration, plus power menu themes |
+| Waybar | Alternative status bar — kept in the repo, not started by default |
 | Hyprland shaders | CRT, focus, invert-colors, reading-mode, and display-enhancement shaders |
 
-The active Hyprland setup starts PipeWire, WirePlumber, `awww-daemon`, Hypridle, SwayNC, Udiskie, and Waybar. It uses Foot as the terminal, Nautilus as the file manager, and Rofi as the application launcher.
+The active Hyprland setup starts PipeWire, WirePlumber, `awww-daemon`, Quickshell, SwayNC, and Hypridle. It uses Kitty as the terminal, Nautilus as the file manager, Quickshell as the application launcher, and Zed as the IDE.
 
 ### Quickshell highlights
 
-Quickshell is where most of the custom work lives:
+Quickshell is where most of the custom work lives — it provides the bar, the launcher, and the control center:
 
-- **Vertical bar** — workspaces, MPRIS media controls, system tray, Wi-Fi state, volume, brightness, and clock, all clickable or scrollable.
-- **Control center** — Wi-Fi details, volume and brightness sliders, Do Not Disturb, a Pomodoro timer (25/5) with notifications, and lock/logout/reboot/poweroff actions.
+- **Vertical bar** — 5 workspaces, rotated active-window title, MPRIS media controls, system tray, Wi-Fi state, volume, brightness, and clock, all clickable or scrollable.
+- **App launcher** (`Super + Space`) — bottom panel over an overlay layer, live search over desktop entries, keyboard navigation with Enter to launch, Esc or an outside click to close.
+- **Control center** (`Super + N`) — clock, Do Not Disturb toggle, a Pomodoro timer (25/5) with notifications, Wi-Fi SSID, volume and brightness sliders, and lock/logout/reboot/poweroff actions.
 - **Coding agent indicator** — the control center watches running processes and shows a banner when Claude, OpenCode, or Codex is actively working, so you know a task is still in flight.
-- **App launcher and notification popups** — a warm brown/terracotta palette, overlay-layer windows with animated open/close.
+- **Warm brown/terracotta palette** shared by the bar, the launcher, and the control center, with animated open/close on both overlay windows.
+
+The launcher and the control center are driven from Hyprland through `qs ipc call launcher toggle` and `qs ipc call controlcenter toggle`, so Quickshell must be running (it is started at login) for `Super + Space` and `Super + N` to work. `NotificationPopup.qml` ships as a standalone component ready to be wired to a notification server; actual notification popups are currently handled by SwayNC.
 
 ## Main key bindings
 
 | Shortcut | Action |
 | --- | --- |
-| `Super + Enter` | Open Foot |
-| `Super + Space` | Open Rofi (drun) |
+| `Super + Enter` | Open Kitty |
+| `Super + Space` | Toggle the Quickshell app launcher |
+| `Super + N` | Toggle the Quickshell control center |
 | `Super + Alt + Space` | Open the Rofi main menu |
 | `Super + E` | Open Nautilus |
+| `Super + B` | Open Zed |
 | `Super + Q` | Close the active window |
 | `Super + F` | Toggle fullscreen |
 | `Super + V` | Toggle floating mode |
 | `Super + P` | Toggle pseudo-tiling |
 | `Super + L` | Lock the session |
-| `Super + M` | Exit Hyprland |
-| `Super + N` | Toggle SwayNC |
+| `Super + M` | Exit Hyprland (`hyprshutdown` if installed, `hyprctl dispatch exit` otherwise) |
 | `Super + G` | Region screenshot to clipboard (hyprshot) |
-| `Super + Shift + W` | Wallpaper selector |
-| `Super + Shift + T` | Theme selector |
-| `Super + Shift + N` | Open FeatherPad |
+| `Super + Shift + W` | Open `foot nmtui` (network setup) |
 | `Super + Arrow` | Move focus |
 | `Super + Shift + Arrow` | Move the active window |
 | `Super + Ctrl + Arrow` | Resize the active window |
@@ -65,6 +67,7 @@ Quickshell is where most of the custom work lives:
 | `Super + S` | Toggle the special workspace |
 | `Super + Drag` | Move / resize a window with the mouse |
 | `Super + Mouse wheel` (bar) | Change volume / brightness |
+| `Volume` / `Brightness` keys | Change volume / brightness (pactl, brightnessctl) |
 
 ## Repository layout
 
@@ -74,27 +77,31 @@ configs/
 ├── foot/        Foot terminal configuration
 ├── hypr/        Hyprland, Hypridle, Hyprlock, shaders, and helper scripts
 ├── kitty/       Kitty configuration and color themes
-├── quickshell/  Bar, control center, launcher, and notification popups
-├── rofi/        Launcher, menus, selectors, and themes
+├── quickshell/  Bar, control center, launcher, and notification popup component
+├── rofi/        Main menu, application launcher fallback, and themes
 ├── swaync/      Notification center configuration and stylesheet
 └── waybar/      Status bar configuration and stylesheet
 ```
 
 The `configs/hypr/shaders/` directory also contains an alternative Hyprland and Hyprlock setup alongside the shader collection.
 
+`update_configs.sh` copies `~/.config/<app>/` into `configs/<app>/`, so a directory refreshed by the script ends up containing a nested copy of itself: `configs/hypr/hypr/`, `configs/rofi/rofi/`, `configs/swaync/swaync/`, `configs/waybar/waybar/`, `configs/foot/foot/`, and `configs/fish/fish/`. The nested copy is the live one — `configs/hypr/hypr/hyprland.conf` is the Hyprland config described in this README — while the files directly under `configs/hypr/` are the older retro setup kept for reference.
+
 ## Requirements
 
 Install the applications referenced by the configuration before enabling it. On Artix with pacman:
 
 ```bash
-sudo pacman -S hyprland hypridle hyprlock quickshell foot fish kitty waybar swaync rofi-wayland \
-  nautilus pipewire pipewire-pulse wireplumber udiskie brightnessctl libnotify jq curl \
-  playerctl imagemagick networkmanager hyprshot featherpad
+sudo pacman -S hyprland hypridle hyprlock quickshell kitty foot fish swaync rofi-wayland \
+  nautilus pipewire pipewire-pulse wireplumber brightnessctl libnotify jq curl \
+  playerctl imagemagick networkmanager hyprshot
 ```
 
-On other distros, install the same packages through your own package manager (names may vary slightly: `rofi-wayland`, `quickshell`, and `hyprshot` are the usual suspects on non-Arch distros).
+On other distros, install the same packages through your own package manager (names may vary slightly: `quickshell`, `rofi-wayland`, and `hyprshot` are the usual suspects on non-Arch distros).
 
-Additional commands referenced by the configuration are `awww-daemon`, `hyprquickframe`, `imv`, `nmcli`, `pactl`, and the Rofi scripts expected under `~/.config/rofi/`.
+Additional commands referenced by the configuration are `awww-daemon`, `qs` (the Quickshell IPC client, used for the launcher and the control center), `nmcli`, `pactl`, `dunstctl`, `notify-send`, `systemctl`, `imv`, and the Rofi scripts expected under `~/.config/rofi/`.
+
+Optional, only for specific bindings or helpers: `zed` (`Super + B`), `hyprshutdown` (`Super + M`, falls back to `hyprctl dispatch exit`), `waybar`, `udiskie`, and `nmtui` from `networkmanager` (`Super + Shift + W`).
 
 A Nerd Font is required for the icons. The Kitty, Foot, and Hyprlock configurations expect JetBrainsMono Nerd Font.
 
@@ -115,7 +122,7 @@ cp -r configs/fish/. ~/.config/fish/
 cp -r configs/quickshell/. ~/.config/quickshell/
 ```
 
-Review the monitor definitions, cursor theme, program paths, and autostart commands in `configs/hypr/hyprland.conf` before starting Hyprland. The current monitor setup mirrors `HDMI-A-2` to `eDP-1`.
+Review the monitor definitions, cursor theme, program paths, and autostart commands in `configs/hypr/hypr/hyprland.conf` before starting Hyprland. The current monitor setup mirrors `HDMI-A-2` to `eDP-1`, and the launcher, the bar, and the control center come from `configs/quickshell/`, which must be present at `~/.config/quickshell/` for the default bindings to work.
 
 Make the helper scripts executable after copying them:
 
@@ -135,6 +142,6 @@ chmod +x ~/.config/rofi/*.sh
 - `hyprlock-layout.sh` reports the active keyboard layout.
 - `hyprlock-music.sh` exposes MPRIS track metadata and prepares album artwork.
 - `hyprlock_weather.sh` displays weather and battery information.
-- `rofi/launcher.sh`, `rofi/mainmenu.sh` launch the Rofi menus and selectors.
+- `rofi/launcher.sh`, `rofi/mainmenu.sh` launch the Rofi main menu and its application launcher fallback.
 
 Some helper scripts contain user-specific paths or values. Review them before use, especially the GitHub username, battery device, wallpaper path, and Hyprlock script paths.
