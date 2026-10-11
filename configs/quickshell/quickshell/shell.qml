@@ -12,6 +12,10 @@ Scope {
     id: root
 
     Launcher {}
+    
+    ControlCenter {
+        id: controlCenter
+    }
 
     // --- palette ---
     readonly property color bg: "#1f1612"      // brun très sombre
@@ -161,6 +165,29 @@ Scope {
 
                 Item { Layout.fillHeight: true }
 
+                // ---------- active window title (vertical text or rotated) ----------
+                Item {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.maximumHeight: 200
+                    visible: Hyprland.focusedWindow !== null && Hyprland.focusedWindow.title.length > 0
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: Hyprland.focusedWindow ? Hyprland.focusedWindow.title : ""
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: root.dim
+                        elide: Text.ElideRight
+                        // Rotation pour s'adapter proprement à la barre verticale étroite (40px)
+                        rotation: -90
+                        width: 160
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+
                 // ---------- media ----------
                 ColumnLayout {
                     visible: root.player !== null
@@ -234,11 +261,11 @@ Scope {
                     }
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: if (root.sink?.audio) root.sink.audio.muted = !root.sink.audio.muted
+                        onClicked: Quickshell.execDetached(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"])
                         onWheel: wheel => {
-                            if (!root.sink?.audio) return;
-                            const d = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                            root.sink.audio.volume = Math.max(0, Math.min(1, root.sink.audio.volume + d));
+                            const d = wheel.angleDelta.y > 0 ? "+5%" : "-5%";
+                            Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", d]);
+                            audioDebounce.restart();
                         }
                     }
                 }
