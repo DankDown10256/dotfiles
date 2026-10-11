@@ -9,7 +9,8 @@ hypr=/home/$USER/.config/hypr/
 swaync=/home/$USER/.config/swaync/
 waybar=/home/$USER/.config/waybar/
 foot=/home/$USER/.config/foot/
-fish=/home/$USER/.config/fish
+fish=/home/$USER/.config/fish/
+quickshell=/home/$USER/.config/quickshell/ 
 
 echo "Update configurations"
 
@@ -30,5 +31,8 @@ INFO "Foot copied"
 
 cp -r "$fish" ./configs/fish/
 INFO "Fish copied"
+
+cp -r "$quickshell" ./configs/quickshell/
+INFO "Quickshell copied"
 
 echo "Update finished"
