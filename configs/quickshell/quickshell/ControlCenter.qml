@@ -8,9 +8,9 @@ import Quickshell.Wayland
 Scope {
     id: root
 
+    property bool open: false
     property bool alive: false
 
-    // Palette Claude
     readonly property color colBg: "#1f1a17"
     readonly property color colSurface: "#2d241f"
     readonly property color colSelection: "#43302580"
@@ -19,31 +19,48 @@ Scope {
     readonly property color colMuted: "#a08b7a"
     readonly property color colDanger: "#e5534b"
 
-    // --- State Pomodoro ---
     property int pomoMinutes: 25
     property int pomoSeconds: 0
     property bool pomoRunning: false
     property bool pomoIsWork: true
 
-    // --- State DND ---
     property bool dndActive: false
 
-    // --- State AI Dev Detector ---
     property bool aiActive: false
     property string aiToolName: ""
+    property int aiCount: 0
+    readonly property var aiTools: ({ claude: "Claude", opencode: "OpenCode", codex: "Codex" })
+
+    property int brightness: 0
+
+    readonly property var sink: Pipewire.defaultAudioSink
+    readonly property int volume: sink?.audio ? Math.round(sink.audio.volume * 100) : 0
+    readonly property bool muted: sink?.audio ? sink.audio.muted : false
+
+    PwObjectTracker { objects: [root.sink] }
+
+    onOpenChanged: {
+        if (open) {
+            alive = true
+            closeTimer.stop()
+        } else {
+            closeTimer.restart()
+        }
+    }
 
     IpcHandler {
         target: "controlcenter"
-        function toggle() {
-            if (root.alive) {
-                closeTimer.restart()
-                root.alive = false
-            } else {
-                panelLoader.active = true
-                root.alive = true
-                closeTimer.stop()
-            }
-        }
+        function toggle(): void { root.open = !root.open }
+    }
+
+    QtObject {
+        id: wifiInfo
+        property string ssid: "Non connecté"
+    }
+
+    QtObject {
+        id: userInfo
+        property string username: "dev"
     }
 
     Process {
@@ -59,58 +76,57 @@ Scope {
 
     Process {
         id: wifiProc
-        running: true
-        command: ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"]
-        stdout: SplitParser {
-            onRead: data => {
-                let lines = data.split("\n")
-                for (let line of lines) {
-                    if (line.startsWith("yes:")) {
-                        wifiInfo.ssid = line.substring(4)
-                        break
-                    }
-                }
+        command: ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi", "list", "--rescan", "no"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const line = text.split("\n").find(l => l.startsWith("yes:"))
+                wifiInfo.ssid = line ? line.substring(4) : "Non connecté"
             }
         }
     }
 
-    // Détection des outils de dev IA (opencode, claude, codex)
     Process {
-        id: aiDetectorProc
-        command: ["sh", "-c", "pgrep -af 'opencode|claude|codex' || true"]
+        id: briProc
+        command: ["brightnessctl", "-m"]
         stdout: StdioCollector {
             onStreamFinished: {
-                let output = text.trim()
-                if (output.length > 0) {
-                    root.aiActive = true
-                    if (output.includes("opencode")) root.aiToolName = "Opencode"
-                    else if (output.includes("claude")) root.aiToolName = "Claude Code"
-                    else if (output.includes("codex")) root.aiToolName = "Codex"
-                    else root.aiToolName = "Assistant IA"
-                } else {
-                    root.aiActive = false
-                    root.aiToolName = ""
+                const p = text.trim().split(",")
+                if (p.length >= 4) root.brightness = parseInt(p[3]) || 0
+            }
+        }
+    }
+
+    Process {
+        id: aiDetectorProc
+        command: ["ps", "-eo", "comm=,args="]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const base = s => (s ?? "").split("/").pop().replace(/\.js$/, "")
+                const names = []
+                for (const line of text.split("\n")) {
+                    const t = line.trim().split(/\s+/)
+                    for (const c of [t[0], base(t[1]), base(t[2])]) {
+                        if (root.aiTools.hasOwnProperty(c) && !names.includes(root.aiTools[c]))
+                            names.push(root.aiTools[c])
+                    }
                 }
+                root.aiActive = names.length > 0
+                root.aiToolName = names.join(", ")
+                root.aiCount = names.length
             }
         }
     }
 
     Timer {
         interval: 3000
-        running: true
+        running: root.alive
         repeat: true
         triggeredOnStart: true
-        onTriggered: aiDetectorProc.running = true
-    }
-
-    QtObject {
-        id: wifiInfo
-        property string ssid: "Non connecté"
-    }
-
-    QtObject {
-        id: userInfo
-        property string username: "dev"
+        onTriggered: {
+            wifiProc.running = true
+            briProc.running = true
+            aiDetectorProc.running = true
+        }
     }
 
     Timer {
@@ -136,42 +152,33 @@ Scope {
 
     Timer {
         id: closeTimer
-        interval: 380
-        running: false
-        onTriggered: panelLoader.active = false
+        interval: 420
+        onTriggered: root.alive = false
     }
 
     LazyLoader {
-        id: panelLoader
         active: root.alive
 
         PanelWindow {
-            id: panel
-            width: 420
-            height: 610
-
-            anchors {
-                bottom: true
-                right: true
-            }
-
-            margins {
-                right: root.alive ? 16 : -440
-                bottom: root.alive ? 16 : -630
-            }
-
+            WlrLayershell.layer: WlrLayer.Overlay
+            exclusionMode: ExclusionMode.Ignore
             color: "transparent"
-            focusable: root.alive
+            anchors { top: true; bottom: true; left: true; right: true }
 
-            Behavior on margins.right {
-                NumberAnimation { duration: 350; easing.type: Easing.OutQuint }
-            }
-            Behavior on margins.bottom {
-                NumberAnimation { duration: 350; easing.type: Easing.OutQuint }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.open = false
             }
 
             Rectangle {
-                anchors.fill: parent
+                id: card
+                width: 420
+                height: 610
+                anchors.right: parent.right
+                anchors.rightMargin: 16
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: shown ? 16 : -(height + 20)
+
                 color: root.colBg
                 topLeftRadius: 28
                 bottomLeftRadius: 28
@@ -180,12 +187,29 @@ Scope {
                 border.color: root.colSelection
                 border.width: 1
 
+                property bool shown: false
+                opacity: shown ? 1 : 0
+
+                Component.onCompleted: Qt.callLater(() => shown = root.open)
+                Connections {
+                    target: root
+                    function onOpenChanged() { card.shown = root.open }
+                }
+
+                Behavior on anchors.bottomMargin {
+                    NumberAnimation { duration: 350; easing.type: Easing.OutQuint }
+                }
+                Behavior on opacity {
+                    NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                }
+
+                MouseArea { anchors.fill: parent }
+
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 20
                     spacing: 12
 
-                    // ---------- Header ----------
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
@@ -218,7 +242,6 @@ Scope {
                         }
                     }
 
-                    // ---------- Widget Détection IA (Conditionnel) ----------
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 45
@@ -234,14 +257,14 @@ Scope {
                             spacing: 10
 
                             Text {
-                                text: "\uF121" // Code bracket
+                                text: "\uF121"
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 16
                                 color: root.colAccent
                             }
 
                             Text {
-                                text: root.aiToolName + " est en train de travailler..."
+                                text: root.aiToolName + (root.aiCount > 1 ? " sont" : " est") + " en train de travailler..."
                                 font.pixelSize: 12
                                 font.bold: true
                                 color: root.colText
@@ -251,7 +274,6 @@ Scope {
                         }
                     }
 
-                    // ---------- Ligne DND & Pomodoro Quick Controls ----------
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
@@ -314,7 +336,6 @@ Scope {
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: root.pomoRunning = !root.pomoRunning
-                                // Double-clic pour réinitialiser le pomodoro à 25:00
                                 onDoubleClicked: {
                                     root.pomoRunning = false
                                     root.pomoIsWork = true
@@ -325,7 +346,6 @@ Scope {
                         }
                     }
 
-                    // ---------- Carte Pomodoro Détaillée ----------
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 65
@@ -375,7 +395,6 @@ Scope {
                         }
                     }
 
-                    // ---------- Carte Wifi ----------
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 60
@@ -416,7 +435,6 @@ Scope {
                         }
                     }
 
-                    // ---------- Audio ----------
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 55
@@ -453,7 +471,7 @@ Scope {
                                     radius: 3
 
                                     Rectangle {
-                                        width: parent.width * (root.volume / 100)
+                                        width: parent.width * Math.min(1, root.volume / 100)
                                         height: parent.height
                                         color: root.muted ? root.colDanger : root.colAccent
                                         radius: 3
@@ -463,7 +481,6 @@ Scope {
                         }
                     }
 
-                    // ---------- Luminosité ----------
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 55
@@ -500,7 +517,7 @@ Scope {
                                     radius: 3
 
                                     Rectangle {
-                                        width: parent.width * (root.brightness / 100)
+                                        width: parent.width * Math.min(1, root.brightness / 100)
                                         height: parent.height
                                         color: root.colAccent
                                         radius: 3
@@ -512,7 +529,6 @@ Scope {
 
                     Item { Layout.fillHeight: true }
 
-                    // ---------- Footer System Actions ----------
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
