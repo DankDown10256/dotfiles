@@ -11,14 +11,14 @@ Scope {
     property bool open: false
     property bool alive: false
 
-    readonly property color colBg: "#1f1a17"
-    readonly property color colSurface: "#2d241f"
-    readonly property color colSelection: "#43302580"
-    readonly property color colAccent: "#d97757"
-    readonly property color colText: "#f0e6d8"
-    readonly property color colMuted: "#a08b7a"
-    readonly property color colDanger: "#e5534b"
-
+    readonly property color colBg: "#0d1117"
+    readonly property color colSurface: "#161b22"
+    readonly property color colSelection: "#1f6feb80"
+    readonly property color colAccent: "#58a6ff"
+    readonly property color colText: "#e6edf3"
+    readonly property color colMuted: "#7d8590"
+    readonly property color colDanger: "#f85149"
+    
     property int pomoMinutes: 25
     property int pomoSeconds: 0
     property bool pomoRunning: false

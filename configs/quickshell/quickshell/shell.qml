@@ -18,12 +18,11 @@ Scope {
     }
     
     // --- palette ---
-    readonly property color bg: "#1f1612"      // brun très sombre
-    readonly property color fg: "#f0e6d8"      // crème chaud
-    readonly property color dim: "#7a6657"     // brun-gris atténué
-    readonly property color accent: "#d97757"  // orange terracotta
-    readonly property color warn: "#e5534b"    // rouge brique
-
+    readonly property color bg: "#0d1117"
+    readonly property color fg: "#e6edf3"
+    readonly property color dim: "#7d8590"
+    readonly property color accent: "#58a6ff"
+    readonly property color warn: "#f85149"
     // --- audio ---
     property int volume: 0
     property bool muted: false

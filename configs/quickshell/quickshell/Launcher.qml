@@ -9,14 +9,13 @@ import QtQuick.Layouts
 Scope {
     id: launcher
 
-    // --- palette chaude ---
-    readonly property color cBg:      "#1f1a17"   // brun très foncé
-    readonly property color cSurface: "#2d241f"   // champ de recherche
-    readonly property color cSel:     "#43302580" // ligne sélectionnée
-    readonly property color cAccent:  "#d97757"   // terracotta
-    readonly property color cText:    "#f0e6d8"   // crème
-    readonly property color cDim:     "#a08b7a"   // brun clair
-
+    readonly property color cBg:      "#0d1117"
+    readonly property color cSurface: "#161b22"
+    readonly property color cSel:     "#1f6feb80"
+    readonly property color cAccent:  "#58a6ff"
+    readonly property color cText:    "#e6edf3"
+    readonly property color cDim:     "#7d8590"
+    
     property bool open: false
     property bool alive: false   // garde la fenêtre vivante pendant l'animation de sortie
 
