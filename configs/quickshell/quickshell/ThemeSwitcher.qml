@@ -76,7 +76,7 @@ Scope {
 
     Timer {
         id: closeTimer
-        interval: 320
+        interval: 200
         onTriggered: root.alive = false
     }
 
@@ -115,38 +115,48 @@ Scope {
 
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: root.open ? 18 : -90
+                    anchors.bottomMargin: shown ? 44 : 36
 
-                    width: Math.min(538, parent.width - 24)
-                    height: 66
-                    radius: 33
+                    width: Math.min(540, parent.width - 32)
+                    height: 56
+                    radius: 20
 
-                    color: Qt.alpha(root.colors.cSurface, 0.97)
+                    color: root.colors.cSurface
                     border.width: 1
-                    border.color: Qt.alpha(root.colors.cMuted, 0.28)
+                    border.color: Qt.alpha(root.colors.cBorder, 0.65)
 
-                    opacity: root.open ? 1 : 0
-                    scale: root.open ? 1 : 0.92
+                    property bool shown: false
+                    opacity: shown ? 1 : 0
+                    scale: shown ? 1 : 0.98
+
+                    Component.onCompleted: Qt.callLater(() => shown = root.open)
+
+                    Connections {
+                        target: root
+                        function onOpenChanged() { capsule.shown = root.open }
+                    }
 
                     Behavior on anchors.bottomMargin {
                         NumberAnimation {
-                            duration: 380
+                            duration: capsule.shown ? 200 : 160
                             easing.type: Easing.OutCubic
                         }
                     }
 
                     Behavior on opacity {
-                        NumberAnimation { duration: 200 }
-                    }
-
-                    Behavior on scale {
                         NumberAnimation {
-                            duration: 300
+                            duration: capsule.shown ? 200 : 160
                             easing.type: Easing.OutCubic
                         }
                     }
 
-                    // Garde le clic dans la capsule sans fermer le panneau.
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: capsule.shown ? 200 : 160
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {}
@@ -189,7 +199,8 @@ Scope {
 
                         Row {
                             anchors.centerIn: parent
-                            spacing: 6
+                            width: parent.width - 24
+                            spacing: 4
 
                             Repeater {
                                 model: root.themeModel
@@ -203,46 +214,49 @@ Scope {
                                     readonly property bool selected:
                                         root.selectedIndex === index
 
-                                    width: 99
-                                    height: 46
-                                    radius: 23
+                                    width: (parent.width - 16) / 5
+                                    height: 32
+                                    radius: 8
 
                                     color: selected
-                                        ? Qt.alpha(modelData.accent, 0.16)
+                                        ? root.colors.cSelection
                                         : "transparent"
 
-                                    border.width: selected ? 1 : 1
+                                    border.width: 1
                                     border.color: selected
-                                        ? Qt.alpha(modelData.accent, 0.8)
+                                        ? Qt.alpha(modelData.accent, 0.3)
                                         : "transparent"
 
                                     Behavior on color {
-                                        ColorAnimation { duration: 180 }
+                                        ColorAnimation { duration: 120 }
                                     }
 
                                     Behavior on border.color {
-                                        ColorAnimation { duration: 180 }
+                                        ColorAnimation { duration: 120 }
                                     }
 
                                     Row {
                                         anchors.centerIn: parent
-                                        spacing: 7
+                                        spacing: 8
 
                                         Rectangle {
                                             anchors.verticalCenter: parent.verticalCenter
-                                            width: 9
-                                            height: 9
-                                            radius: 5
+                                            width: 8
+                                            height: 8
+                                            radius: 4
                                             color: modelData.accent
                                         }
 
                                         Text {
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: modelData.name
+                                            width: Math.max(0, pill.width - 40)
+                                            elide: Text.ElideRight
                                             color: pill.selected
                                                 ? root.colors.cText
                                                 : root.colors.cMuted
                                             font.pixelSize: 11
+                                            font.family: "sans-serif"
                                             font.weight: pill.selected
                                                 ? Font.DemiBold
                                                 : Font.Medium

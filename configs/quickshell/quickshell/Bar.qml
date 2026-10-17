@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Widgets
@@ -11,7 +12,6 @@ import QtQuick.Layouts
 Scope {
     id: root
 
-    // Exposed to shell.qml through IPC: qs ipc call bar toggle
     property bool barVisible: true
     required property var colors
 
@@ -33,17 +33,141 @@ Scope {
     readonly property color dim: colors.cMuted
     readonly property color accent: colors.cAccent
     readonly property color warn: colors.cWarning
-    // --- palette ---
-    //readonly property color bg: "#0d1117"
-    //readonly property color fg: "#e6edf3"
-    //readonly property color dim: "#7d8590"
-    //readonly property color accent: "#58a6ff"
-    //readonly property color warn: "#f85149"
-    //readonly property string font: "Iosevka Nerd Font"
+    readonly property string font: "JetBrainsMono Nerd Font"
 
-    // --- audio ---
     property int volume: 0
     property bool muted: false
+
+    property bool audioReady: false
+    property bool brightnessReady: false
+    property bool audioRequested: false
+    property bool brightnessRequested: false
+    property bool osdOpen: false
+    property string osdKind: "volume"
+    property int osdValue: 0
+    property bool osdMuted: false
+
+    function showOsd(kind, value, isMuted) {
+        osdKind = kind
+        osdValue = value
+        osdMuted = isMuted
+        osdOpen = true
+        osdTimeout.restart()
+    }
+
+    IpcHandler {
+        target: "osd"
+
+        function volume(): void {
+            root.audioRequested = true
+            if (!audioReader.running) audioReader.running = true
+        }
+
+        function brightness(): void {
+            root.brightnessRequested = true
+            if (!briProc.running) briProc.running = true
+        }
+    }
+
+    Timer {
+        id: osdTimeout
+        interval: 1400
+        onTriggered: root.osdOpen = false
+    }
+
+    PanelWindow {
+        anchors.bottom: true
+        margins.bottom: (root.barVisible ? 32 : 0) + 12
+        implicitWidth: 280
+        implicitHeight: 64
+        exclusiveZone: 0
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        color: "transparent"
+        visible: root.osdOpen || osdCard.opacity > 0
+        mask: Region {}
+
+        Rectangle {
+            id: osdCard
+            anchors.fill: parent
+            radius: 16
+            color: root.colors.cBg
+            border.width: 1
+            border.color: Qt.alpha(root.colors.cBorder, 0.65)
+            opacity: root.osdOpen ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: root.osdOpen ? 200 : 140
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 12
+
+                Text {
+                    text: root.osdKind === "brightness" ? "\uf185"
+                        : root.osdMuted ? "\uf6a9" : "\uf028"
+                    font.family: root.font
+                    font.pixelSize: 16
+                    color: root.osdMuted ? root.dim : root.accent
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        Text {
+                            text: root.osdKind === "brightness" ? "Luminosité"
+                                : root.osdMuted ? "Son coupé" : "Volume"
+                            font.family: "sans-serif"
+                            font.pixelSize: 13
+                            color: root.fg
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Text {
+                            text: root.osdValue + "%"
+                            font.family: "sans-serif"
+                            font.pixelSize: 11
+                            color: root.dim
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 4
+                        radius: 2
+                        color: root.colors.cSelection
+
+                        Rectangle {
+                            width: parent.width * Math.min(1, Math.max(
+                                0, root.osdMuted ? 0 : root.osdValue / 100
+                            ))
+                            height: parent.height
+                            radius: 2
+                            color: root.accent
+
+                            Behavior on width {
+                                NumberAnimation {
+                                    duration: 120
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Process {
         id: audioReader
@@ -52,9 +176,20 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: {
                 const vol = text.match(/(\d+)%/)
-                if (vol) root.volume = parseInt(vol[1])
                 const mute = text.match(/Mute:\s*(yes|no)/)
-                if (mute) root.muted = mute[1] === "yes"
+                if (!vol || !mute) {
+                    root.audioRequested = false
+                    return
+                }
+                const nextVolume = parseInt(vol[1])
+                const nextMuted = mute[1] === "yes"
+                const changed = nextVolume !== root.volume || nextMuted !== root.muted
+                root.volume = nextVolume
+                root.muted = nextMuted
+                if ((root.audioReady && changed) || root.audioRequested)
+                    root.showOsd("volume", nextVolume, nextMuted)
+                root.audioReady = true
+                root.audioRequested = false
             }
         }
     }
@@ -78,7 +213,6 @@ Scope {
 
     Component.onCompleted: audioReader.running = true
 
-    // --- wifi (nmcli, polling) ---
     property bool wifiUp: false
     property int wifiSignal: 0
     Process {
@@ -98,7 +232,6 @@ Scope {
         onTriggered: wifiProc.running = true
     }
 
-    // --- brightness (brightnessctl) ---
     property int brightness: 0
     Process {
         id: briProc
@@ -106,7 +239,17 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: {
                 const p = text.trim().split(",");
-                if (p.length >= 4) root.brightness = parseInt(p[3]) || 0;
+                const nextBrightness = p.length >= 4 ? parseInt(p[3]) : NaN
+                if (isNaN(nextBrightness)) {
+                    root.brightnessRequested = false
+                    return
+                }
+                const changed = nextBrightness !== root.brightness
+                root.brightness = nextBrightness
+                if ((root.brightnessReady && changed) || root.brightnessRequested)
+                    root.showOsd("brightness", nextBrightness, false)
+                root.brightnessReady = true
+                root.brightnessRequested = false
             }
         }
     }
@@ -115,7 +258,6 @@ Scope {
         onTriggered: briProc.running = true
     }
 
-    // --- batterie (sysfs, polling) ---
     property bool batPresent: false
     property int batPercent: 0
     property bool batCharging: false
@@ -146,19 +288,16 @@ Scope {
         return "\uf244";
     }
 
-    // --- horloge ---
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
-    // --- media ---
     readonly property var player: {
         const l = Mpris.players.values;
         return l.find(p => p.isPlaying) ?? l[0] ?? null;
     }
 
-    // icône générique
     component Ico: Text {
         color: root.fg
-        font.pixelSize: 16
+        font.pixelSize: 14
         font.family: root.font
         verticalAlignment: Text.AlignVCenter
         Layout.alignment: Qt.AlignVCenter
@@ -175,204 +314,260 @@ Scope {
             visible: root.barVisible
 
             anchors { bottom: true; left: true; right: true }
-            implicitHeight: 35
+            implicitHeight: 32
             exclusiveZone: root.barVisible ? implicitHeight : 0
             color: root.bg
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                spacing: 12
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                spacing: 16
 
-                // ---------- workspaces ----------
-                Repeater {
-                    model: 5
-                    Rectangle {
-                        id: ws
-                        required property int index
-                        readonly property int wsId: index + 1
-                        readonly property bool focused: Hyprland.focusedWorkspace?.id === wsId
-                        readonly property bool exists: Hyprland.workspaces.values.some(w => w.id === wsId)
+                Rectangle {
+                    Layout.alignment: Qt.AlignVCenter
+                    implicitWidth: workspaceRow.implicitWidth + 8
+                    implicitHeight: 28
+                    radius: 8
+                    color: "transparent"
 
-                        Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 28; implicitHeight: 28
-                        radius: 8
-                        color: focused ? root.accent : "transparent"
+                    RowLayout {
+                        id: workspaceRow
+                        anchors.centerIn: parent
+                        spacing: 4
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: ws.wsId
-                            font.pixelSize: 13
-                            font.bold: ws.focused
-                            color: ws.focused ? root.bg : (ws.exists ? root.fg : root.dim)
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: Hyprland.dispatch("workspace " + ws.wsId)
+                        Repeater {
+                            model: 5
+                            Rectangle {
+                                id: ws
+                                required property int index
+                                readonly property int wsId: index + 1
+                                readonly property bool focused: Hyprland.focusedWorkspace?.id === wsId
+                                readonly property bool exists: Hyprland.workspaces.values.some(w => w.id === wsId)
+
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: focused ? 28 : 20
+                                implicitHeight: 28
+                                radius: 8
+                                color: workspaceMouse.containsMouse
+                                    ? root.colors.cSurface
+                                    : "transparent"
+
+                                Behavior on implicitWidth {
+                                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation { duration: 120 }
+                                }
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: ws.focused ? 20 : 6
+                                    height: 6
+                                    radius: 3
+                                    color: ws.focused ? root.accent
+                                        : ws.exists ? root.dim : root.colors.cSelection
+
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: 180
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation { duration: 120 }
+                                    }
+                                }
+                                MouseArea {
+                                    id: workspaceMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: Hyprland.dispatch("workspace " + ws.wsId)
+                                }
+                            }
                         }
                     }
                 }
 
-                // ---------- titre fenêtre active (centré) ----------
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
                     Text {
-                        anchors.centerIn: parent
-                        width: Math.min(implicitWidth, parent.width)
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, parent.width, 280)
                         visible: text.length > 0
                         text: Hyprland.focusedWindow ? Hyprland.focusedWindow.title : ""
-                        font.pixelSize: 12
-                        font.bold: true
-                        font.family: root.font
+                        font.pixelSize: 11
+                        font.bold: false
+                        font.family: "sans-serif"
                         color: root.dim
                         elide: Text.ElideRight
-                        horizontalAlignment: Text.AlignHCenter
+                        horizontalAlignment: Text.AlignLeft
                     }
                 }
 
-                // ---------- media ----------
-                RowLayout {
-                    visible: root.player !== null
-                    spacing: 8
+                Rectangle {
                     Layout.alignment: Qt.AlignVCenter
+                    implicitWidth: statusRow.implicitWidth + 16
+                    implicitHeight: 28
+                    radius: 8
+                    color: "transparent"
 
-                    Ico {
-                        text: "\uf048"
-                        color: root.player?.canGoPrevious ? root.fg : root.dim
-                        MouseArea { anchors.fill: parent; onClicked: root.player?.previous() }
-                    }
-                    Ico {
-                        text: root.player?.isPlaying ? "\uf04c" : "\uf04b"
-                        color: root.accent
-                        MouseArea { anchors.fill: parent; onClicked: root.player?.togglePlaying() }
-                    }
-                    Ico {
-                        text: "\uf051"
-                        color: root.player?.canGoNext ? root.fg : root.dim
-                        MouseArea { anchors.fill: parent; onClicked: root.player?.next() }
-                    }
-                }
+                    RowLayout {
+                        id: statusRow
+                        anchors.centerIn: parent
+                        spacing: 12
 
-                // ---------- tray ----------
-                Repeater {
-                    model: SystemTray.items
-                    MouseArea {
-                        id: trayItem
-                        required property var modelData
-                        Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 20; implicitHeight: 20
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        Repeater {
+                            model: SystemTray.items
+                            MouseArea {
+                                id: trayItem
+                                required property var modelData
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 20; implicitHeight: 20
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-                        onClicked: mouse => {
-                            if (mouse.button === Qt.LeftButton && !modelData.onlyMenu) {
-                                modelData.activate();
-                            } else if (modelData.hasMenu) {
-                                const p = mapToItem(null, mouse.x, mouse.y);
-                                modelData.display(bar, p.x, p.y);
+                                onClicked: mouse => {
+                                    if (mouse.button === Qt.LeftButton && !modelData.onlyMenu) {
+                                        modelData.activate();
+                                    } else if (modelData.hasMenu) {
+                                        const p = mapToItem(null, mouse.x, mouse.y);
+                                        modelData.display(bar, p.x, p.y);
+                                    }
+                                }
+
+                                IconImage {
+                                    anchors.fill: parent
+                                    source: trayItem.modelData.icon
+                                }
                             }
                         }
 
-                        IconImage {
-                            anchors.fill: parent
-                            source: trayItem.modelData.icon
-                        }
-                    }
-                }
-
-                // ---------- wifi ----------
-                Ico {
-                    text: "\uf1eb"
-                    color: !root.wifiUp ? root.dim : (root.wifiSignal < 30 ? root.warn : root.fg)
-                }
-
-                // ---------- son ----------
-                Item {
-                    Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: soundRow.implicitWidth
-                    implicitHeight: soundRow.implicitHeight
-
-                    RowLayout {
-                        id: soundRow
-                        spacing: 4
                         Ico {
-                            text: root.muted ? "\uf6a9" : "\uf028"
-                            color: root.muted ? root.warn : root.fg
+                            text: "\uf1eb"
+                            color: !root.wifiUp ? root.dim : (root.wifiSignal < 30 ? root.warn : root.fg)
                         }
+
+                        Item {
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitWidth: Math.max(24, soundRow.implicitWidth)
+                            implicitHeight: 24
+
+                            RowLayout {
+                                id: soundRow
+                                anchors.centerIn: parent
+                                spacing: 4
+                                Ico {
+                                    text: root.muted ? "\uf6a9" : "\uf028"
+                                    color: root.muted ? root.warn : root.fg
+                                }
+                                Text {
+                                    text: root.volume
+                                    visible: false
+                                    color: root.fg
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: Quickshell.execDetached(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"])
+                                onWheel: wheel => {
+                                    const d = wheel.angleDelta.y > 0 ? "+5%" : "-5%";
+                                    Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", d]);
+                                    audioDebounce.restart();
+                                }
+                            }
+                        }
+
+                        Item {
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitWidth: briRow.implicitWidth
+                            implicitHeight: briRow.implicitHeight
+                            visible: false
+
+                            RowLayout {
+                                id: briRow
+                                spacing: 4
+                                Ico { text: "\uf185" }
+                                Text {
+                                    text: root.brightness
+                                    color: root.fg
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onWheel: wheel => {
+                                    Quickshell.execDetached(["brightnessctl", "set", wheel.angleDelta.y > 0 ? "5%+" : "5%-"]);
+                                    briProc.running = true;
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            visible: root.batPresent
+                            spacing: 4
+                            Layout.alignment: Qt.AlignVCenter
+
+                            readonly property bool low: root.batPercent <= 15 && !root.batCharging
+
+                            Ico {
+                                text: root.batIcon()
+                                color: parent.low ? root.warn : (root.batCharging ? root.accent : root.fg)
+                            }
+                            Text {
+                                text: root.batPercent + "%"
+                                color: parent.low ? root.warn : root.fg
+                                font.family: root.font
+                                font.pixelSize: 12
+                            }
+                        }
+
                         Text {
-                            text: root.volume
+                            Layout.alignment: Qt.AlignVCenter
                             color: root.fg
-                            font.family: root.font
                             font.pixelSize: 12
-                        }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: Quickshell.execDetached(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"])
-                        onWheel: wheel => {
-                            const d = wheel.angleDelta.y > 0 ? "+5%" : "-5%";
-                            Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", d]);
-                            audioDebounce.restart();
-                        }
-                    }
-                }
-
-                // ---------- luminosité ----------
-                Item {
-                    Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: briRow.implicitWidth
-                    implicitHeight: briRow.implicitHeight
-
-                    RowLayout {
-                        id: briRow
-                        spacing: 4
-                        Ico { text: "\uf185" }
-                        Text {
-                            text: root.brightness
-                            color: root.fg
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.bold: false
+                            text: Qt.formatDateTime(clock.date, "HH:mm")
+                        }
+
+                        Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitWidth: 24
+                            implicitHeight: 24
+                            radius: 8
+                            color: controlMouse.containsMouse ? root.colors.cSelection
+                                : "transparent"
+
+                            Behavior on color {
+                                ColorAnimation { duration: 120 }
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\uf1de"
+                                font.family: root.font
+                                font.pixelSize: 12
+                                color: root.dim
+                            }
+
+                            MouseArea {
+                                id: controlMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: Quickshell.execDetached([
+                                    "qs", "ipc", "call", "controlcenter", "toggle"
+                                ])
+                            }
                         }
                     }
-                    MouseArea {
-                        anchors.fill: parent
-                        onWheel: wheel => {
-                            Quickshell.execDetached(["brightnessctl", "set", wheel.angleDelta.y > 0 ? "5%+" : "5%-"]);
-                            briProc.running = true;
-                        }
-                    }
-                }
-
-                // ---------- batterie ----------
-                RowLayout {
-                    visible: root.batPresent
-                    spacing: 4
-                    Layout.alignment: Qt.AlignVCenter
-
-                    readonly property bool low: root.batPercent <= 15 && !root.batCharging
-
-                    Ico {
-                        text: root.batIcon()
-                        color: parent.low ? root.warn : (root.batCharging ? root.accent : root.fg)
-                    }
-                    Text {
-                        text: root.batPercent + "%"
-                        color: parent.low ? root.warn : root.fg
-                        font.family: root.font
-                        font.pixelSize: 12
-                    }
-                }
-
-                // ---------- heure ----------
-                Text {
-                    Layout.alignment: Qt.AlignVCenter
-                    color: root.fg
-                    font.pixelSize: 13
-                    font.family: root.font
-                    font.bold: true
-                    text: Qt.formatDateTime(clock.date, "HH:mm")
                 }
             }
         }

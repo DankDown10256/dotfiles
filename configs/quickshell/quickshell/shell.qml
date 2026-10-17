@@ -14,23 +14,30 @@ Scope {
 
     Colors {
       id: colors
-      scheme: "warm"
+    }
+
+    Notifications {
+      id: notificationCenter
+      colors: colors
     }
 
     Launcher {
       colors: colors
+      barInset: desktopBar.barVisible ? 32 : 0
     } 
     
     ControlCenter {
       colors: colors
+      notifications: notificationCenter
+      barInset: desktopBar.barVisible ? 32 : 0
     }
     Bar {
+      id: desktopBar
       colors: colors
     }
     ThemeSwitcher {
       colors: colors
     } 
-    // ---------- hot corners ----------
     Variants {
         model: Quickshell.screens
 
@@ -38,12 +45,14 @@ Scope {
             required property var modelData
 
             HotCorner {
+                colors: colors
                 screen: modelData
                 corner: "bl"
                 command: ["qs", "ipc", "call", "launcher", "toggle"]
             }
 
             HotCorner {
+                colors: colors
                 screen: modelData
                 corner: "tr"
                 command: ["qs", "ipc", "call", "controlcenter", "toggle"]
