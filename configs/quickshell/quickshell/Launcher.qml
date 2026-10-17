@@ -102,6 +102,11 @@ Scope {
                     entry.execute();
                     launcher.open = false;
                 }
+                
+                function webSearch(q) {
+                    Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(q)]);
+                    launcher.open = false;
+                }
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -112,7 +117,7 @@ Scope {
                         id: search
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
-                        placeholderText: "Rechercher une app..."
+                        placeholderText: "Recherche ..."
                         placeholderTextColor: launcher.cDim
                         color: launcher.cText
                         selectionColor: launcher.cAccent
@@ -123,7 +128,11 @@ Scope {
                         Component.onCompleted: forceActiveFocus()
 
                         onTextChanged: list.currentIndex = 0
-                        onAccepted: panel.launch(list.currentItem?.entry)
+                        
+                        onAccepted: {
+                          if (list.currentItem) panel.launch(list.currentItem.entry)
+                          else if (text.trim() !== "") panel.webSearch(text.trim())
+                        }
 
                         Keys.onEscapePressed: launcher.open = false
                         Keys.onDownPressed: list.incrementCurrentIndex()
@@ -174,7 +183,7 @@ Scope {
                                 }
                                 Text {
                                     text: item.entry.name
-                                    color: item.ListView.isCurrentItem ? launcher.cText : launcher.cDim
+                                    color: item.ListView.isCurrentItem ?  launcher.cText : launcher.cDim
                                     font.pixelSize: 14
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
