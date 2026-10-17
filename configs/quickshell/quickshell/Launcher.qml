@@ -8,14 +8,15 @@ import QtQuick.Layouts
 
 Scope {
     id: launcher
-
-    readonly property color cBg:      "#0d1117"
-    readonly property color cSurface: "#161b22"
-    readonly property color cSel:     "#1f6feb80"
-    readonly property color cAccent:  "#58a6ff"
-    readonly property color cText:    "#e6edf3"
-    readonly property color cDim:     "#7d8590"
-
+    required property var colors
+ 
+    readonly property color cBg:      colors.cBg
+    readonly property color cSurface: colors.cSurface
+    readonly property color cSel:     colors.cSelection
+    readonly property color cAccent:  colors.cAccent
+    readonly property color cText:    colors.cText
+    readonly property color cDim:     colors.cMuted
+    
     // doit correspondre à implicitHeight de la barre
     readonly property int barHeight: 35
     readonly property int gap: 16
@@ -29,7 +30,7 @@ Scope {
     }
     Timer {
         id: closeTimer
-        interval: 420            // doit rester > durée de l'animation (380 ms)
+        interval: 120            // doit rester > durée de l'animation (380 ms)
         onTriggered: launcher.alive = false
     }
 
@@ -107,6 +108,11 @@ Scope {
                     Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(q)]);
                     launcher.open = false;
                 }
+                
+                function youtubeSearch(q) {
+                    Quickshell.execDetached(["xdg-open", "https://www.youtube.com/results?search_query=" + encodeURIComponent(q)]);
+                    launcher.open = false;
+                }
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -130,8 +136,18 @@ Scope {
                         onTextChanged: list.currentIndex = 0
                         
                         onAccepted: {
-                          if (list.currentItem) panel.launch(list.currentItem.entry)
-                          else if (text.trim() !== "") panel.webSearch(text.trim())
+                           const query = text.trim();
+
+                           if (list.currentItem) {
+                              panel.launch(list.currentItem.entry);
+                           } else if (query.startsWith("youtube:")) {
+                              const searchQuery = query.slice("youtube:".length).trim();
+
+                              if (searchQuery !== "")
+                                  panel.youtubeSearch(searchQuery);
+                              } else if (query !== "") {
+                                  panel.webSearch(query);
+                              }
                         }
 
                         Keys.onEscapePressed: launcher.open = false

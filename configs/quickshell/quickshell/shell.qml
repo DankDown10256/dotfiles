@@ -7,14 +7,29 @@ import Quickshell.Services.SystemTray
 import Quickshell.Services.Mpris
 import QtQuick
 import QtQuick.Layouts
+import "."
 
 Scope {
     id: root
 
-    Launcher {}
-    ControlCenter {}
-    Bar {}
+    Colors {
+      id: colors
+      scheme: "warm"
+    }
 
+    Launcher {
+      colors: colors
+    } 
+    
+    ControlCenter {
+      colors: colors
+    }
+    Bar {
+      colors: colors
+    }
+    ThemeSwitcher {
+      colors: colors
+    } 
     // ---------- hot corners ----------
     Variants {
         model: Quickshell.screens

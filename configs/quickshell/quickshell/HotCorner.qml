@@ -5,7 +5,7 @@ import Quickshell.Wayland
 
 PanelWindow {
     id: root
-
+    required property var colors
     required property string corner      // "tl" | "tr" | "bl" | "br"
     property var command: []
     property int dwell: 80              // ms de survol avant déclenchement

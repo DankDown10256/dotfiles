@@ -13,6 +13,7 @@ Scope {
 
     // Exposed to shell.qml through IPC: qs ipc call bar toggle
     property bool barVisible: true
+    required property var colors
 
     IpcHandler {
         target: "bar"
@@ -26,14 +27,19 @@ Scope {
             root.barVisible = false
         }
     }
-
+    
+    readonly property color bg: colors.cBg
+    readonly property color fg: colors.cText
+    readonly property color dim: colors.cMuted
+    readonly property color accent: colors.cAccent
+    readonly property color warn: colors.cWarning
     // --- palette ---
-    readonly property color bg: "#0d1117"
-    readonly property color fg: "#e6edf3"
-    readonly property color dim: "#7d8590"
-    readonly property color accent: "#58a6ff"
-    readonly property color warn: "#f85149"
-    readonly property string font: "Iosevka Nerd Font"
+    //readonly property color bg: "#0d1117"
+    //readonly property color fg: "#e6edf3"
+    //readonly property color dim: "#7d8590"
+    //readonly property color accent: "#58a6ff"
+    //readonly property color warn: "#f85149"
+    //readonly property string font: "Iosevka Nerd Font"
 
     // --- audio ---
     property int volume: 0

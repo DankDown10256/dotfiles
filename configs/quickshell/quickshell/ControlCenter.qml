@@ -11,18 +11,30 @@ Scope {
     property bool open: false
     property bool alive: false
 
-    readonly property color colBg: "#0d1117"
-    readonly property color colSurface: "#161b22"
-    readonly property color colSelection: "#1f6feb80"
-    readonly property color colAccent: "#58a6ff"
-    readonly property color colText: "#e6edf3"
-    readonly property color colMuted: "#7d8590"
-    readonly property color colDanger: "#f85149"
+    //readonly property color colBg: "#0d1117"
+    //readonly property color colSurface: "#161b22"
+    //readonly property color colSelection: "#1f6feb80"
+    //readonly property color colAccent: "#58a6ff"
+    //readonly property color colText: "#e6edf3"
+    //readonly property color colMuted: "#7d8590"
+    //readonly property color colDanger: "#f85149"
+    
+    readonly property color colBg:        colors.cBg
+    readonly property color colSurface:   colors.cSurface
+    readonly property color colSelection: colors.cSelection
+    readonly property color colAccent:    colors.cAccent
+    readonly property color colText:      colors.cText
+    readonly property color colMuted:     colors.cMuted
+    readonly property color colDanger:    colors.cDanger
+    readonly property color colSuccess:   colors.cSuccess
+    readonly property color colWarning:   colors.cWarning
     
     property int pomoMinutes: 25
     property int pomoSeconds: 0
     property bool pomoRunning: false
     property bool pomoIsWork: true
+
+    required property var colors
 
     property bool dndActive: false
 

@@ -7,6 +7,7 @@ Rectangle {
     id: root
 
     required property Notification notification
+    required property var colors
 
     width: 360
     implicitHeight: mainLayout.height + 24
