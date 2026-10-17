@@ -35,7 +35,9 @@ Scope {
         if (themeModel[index].id === "warm") {
            Quickshell.execDetached(["awww", "img", homePath + "/macos-sequoia-default-wallpaper.png"]) 
         } else if (themeModel[index].id === "github-dark") {
-           Quickshell.execDetached(["awww", "img", homePath + "/wallpaper_mountains_blue.png"]) 
+           Quickshell.execDetached(["awww", "img", homePath + "/beach.jpg"]) 
+         } else if (themeModel[index].id === "e-ink") {
+           Quickshell.execDetached(["awww", "img", homePath + "/red_eyes.jpg"])
         }
 
         open = false
