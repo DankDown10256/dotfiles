@@ -29,8 +29,7 @@ Scope {
     property bool aiActive: false
     property string aiToolName: ""
     property int aiCount: 0
-    property string vibe_cli: "Vibe CLI"
-    readonly property var aiTools: ({ claude: "Claude", opencode: "OpenCode", codex: "Codex", vibe_cli: "Mistral Vibe" })
+    readonly property var aiTools: ({ claude: "Claude", opencode: "OpenCode", codex: "Codex" })
 
     property int brightness: 0
 
@@ -80,7 +79,7 @@ Scope {
         command: ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi", "list", "--rescan", "no"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const line = text.split("\n").find(l => l.startsWith("yes:"))
+                const line = text.split("\n").find(l => l.startsWith("oui:"))
                 wifiInfo.ssid = line ? line.substring(4) : "Non connecté"
             }
         }
@@ -110,6 +109,8 @@ Scope {
                         if (root.aiTools.hasOwnProperty(c) && !names.includes(root.aiTools[c]))
                             names.push(root.aiTools[c])
                     }
+                    if (line.startsWith("Vibe CLI") && !names.includes("Mistral Vibe"))
+                        names.push("Mistral Vibe")
                 }
                 root.aiActive = names.length > 0
                 root.aiToolName = names.join(", ")
