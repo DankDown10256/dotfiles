@@ -15,7 +15,11 @@ Scope {
     readonly property color cAccent:  "#58a6ff"
     readonly property color cText:    "#e6edf3"
     readonly property color cDim:     "#7d8590"
-    
+
+    // doit correspondre à implicitHeight de la barre
+    readonly property int barHeight: 35
+    readonly property int gap: 16
+
     property bool open: false
     property bool alive: false   // garde la fenêtre vivante pendant l'animation de sortie
 
@@ -50,20 +54,21 @@ Scope {
                 onClicked: launcher.open = false
             }
 
-            // --- l'encoche ---
+            // --- panel latéral ---
             Rectangle {
                 id: panel
-                width: 720
-                height: 320
-                anchors.horizontalCenter: parent.horizontalCenter
+                width: 400
+                anchors.top: parent.top
+                anchors.topMargin: launcher.gap
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: shown ? 0 : -height   // hors écran par le bas
+                anchors.bottomMargin: launcher.barHeight + launcher.gap   // ne chevauche pas la barre
+                anchors.left: parent.left
+                anchors.leftMargin: shown ? launcher.gap : -(width + 20)  // hors écran par la gauche
 
                 color: launcher.cBg
-                topLeftRadius: 28
-                topRightRadius: 28
-                bottomLeftRadius: 0
-                bottomRightRadius: 0
+                radius: 28
+                border.color: launcher.cSel
+                border.width: 1
 
                 property bool shown: false
                 opacity: shown ? 1 : 0
@@ -75,7 +80,7 @@ Scope {
                     function onOpenChanged() { panel.shown = launcher.open }
                 }
 
-                Behavior on anchors.bottomMargin {
+                Behavior on anchors.leftMargin {
                     NumberAnimation { duration: 380; easing.type: Easing.OutQuint }
                 }
                 Behavior on opacity {
@@ -100,13 +105,13 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 14
-                    anchors.topMargin: 18
-                    spacing: 10
+                    anchors.margins: 16
+                    spacing: 12
 
                     TextField {
                         id: search
                         Layout.fillWidth: true
+                        Layout.preferredHeight: 44
                         placeholderText: "Rechercher une app..."
                         placeholderTextColor: launcher.cDim
                         color: launcher.cText
@@ -114,7 +119,7 @@ Scope {
                         selectedTextColor: launcher.cBg
                         font.pixelSize: 16
                         leftPadding: 14
-                        background: Rectangle { radius: 12; color: launcher.cSurface }
+                        background: Rectangle { radius: 14; color: launcher.cSurface }
                         Component.onCompleted: forceActiveFocus()
 
                         onTextChanged: list.currentIndex = 0
@@ -130,6 +135,7 @@ Scope {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         clip: true
+                        spacing: 2
                         currentIndex: 0
                         model: ScriptModel { values: panel.results }
 
@@ -140,15 +146,15 @@ Scope {
                             readonly property var entry: modelData
 
                             width: ListView.view.width
-                            height: 42
-                            radius: 10
+                            height: 46
+                            radius: 12
                             color: ListView.isCurrentItem ? launcher.cSel : "transparent"
 
                             // barre d'accent sur l'élément sélectionné
                             Rectangle {
                                 visible: item.ListView.isCurrentItem
                                 width: 3
-                                height: parent.height - 16
+                                height: parent.height - 18
                                 radius: 2
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.left: parent.left
@@ -159,10 +165,11 @@ Scope {
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: 16
+                                anchors.rightMargin: 12
                                 spacing: 12
 
                                 IconImage {
-                                    implicitSize: 24
+                                    implicitSize: 26
                                     source: Quickshell.iconPath(item.entry.icon, "application-x-executable")
                                 }
                                 Text {

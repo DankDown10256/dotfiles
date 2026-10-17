@@ -12,50 +12,52 @@ Scope {
     id: root
 
     Launcher {}
-    
+
     ControlCenter {
         id: controlCenter
     }
-    
+
     // --- palette ---
     readonly property color bg: "#0d1117"
     readonly property color fg: "#e6edf3"
     readonly property color dim: "#7d8590"
     readonly property color accent: "#58a6ff"
     readonly property color warn: "#f85149"
+    readonly property string font: "Iosevka Nerd Font"
+
     // --- audio ---
     property int volume: 0
     property bool muted: false
 
     Process {
-      id: audioReader
-      command: ["env", "LC_ALL=C", "sh", "-c",
-        "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@"]
-      stdout: StdioCollector {
-          onStreamFinished: {
-            const vol = text.match(/(\d+)%/)
-            if (vol) root.volume = parseInt(vol[1])
-            const mute = text.match(/Mute:\s*(yes|no)/)
-            if (mute) root.muted = mute[1] === "yes"
-          }
-      }
+        id: audioReader
+        command: ["env", "LC_ALL=C", "sh", "-c",
+            "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const vol = text.match(/(\d+)%/)
+                if (vol) root.volume = parseInt(vol[1])
+                const mute = text.match(/Mute:\s*(yes|no)/)
+                if (mute) root.muted = mute[1] === "yes"
+            }
+        }
     }
 
     Timer {
-      id: audioDebounce
-      interval: 50
-      onTriggered: if (!audioReader.running) audioReader.running = true
+        id: audioDebounce
+        interval: 50
+        onTriggered: if (!audioReader.running) audioReader.running = true
     }
 
     Process {
-      running: true
-      command: ["pactl", "subscribe"]
-      stdout: SplitParser {
-          onRead: data => {
-              if (data.includes("sink") || data.includes("server"))
-                audioDebounce.restart()
-          }
-      }
+        running: true
+        command: ["pactl", "subscribe"]
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.includes("sink") || data.includes("server"))
+                    audioDebounce.restart()
+            }
+        }
     }
 
     Component.onCompleted: audioReader.running = true
@@ -97,6 +99,37 @@ Scope {
         onTriggered: briProc.running = true
     }
 
+    // --- batterie (sysfs, polling) ---
+    property bool batPresent: false
+    property int batPercent: 0
+    property bool batCharging: false
+    Process {
+        id: batProc
+        command: ["sh", "-c",
+            "cat /sys/class/power_supply/BAT0/capacity /sys/class/power_supply/BAT0/status"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const l = text.trim().split("\n");
+                if (l.length < 2) { root.batPresent = false; return; }
+                root.batPresent = true;
+                root.batPercent = parseInt(l[0]) || 0;
+                root.batCharging = l[1] === "Charging";
+            }
+        }
+    }
+    Timer {
+        interval: 10000; running: true; repeat: true; triggeredOnStart: true
+        onTriggered: batProc.running = true
+    }
+    function batIcon() {
+        if (batCharging) return "\uf0e7";
+        if (batPercent > 85) return "\uf240";
+        if (batPercent > 60) return "\uf241";
+        if (batPercent > 35) return "\uf242";
+        if (batPercent > 10) return "\uf243";
+        return "\uf244";
+    }
+
     // --- horloge ---
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
@@ -110,8 +143,9 @@ Scope {
     component Ico: Text {
         color: root.fg
         font.pixelSize: 16
-        horizontalAlignment: Text.AlignHCenter
-        Layout.alignment: Qt.AlignHCenter
+        font.family: root.font
+        verticalAlignment: Text.AlignVCenter
+        Layout.alignment: Qt.AlignVCenter
     }
 
     Variants {
@@ -122,15 +156,15 @@ Scope {
             required property var modelData
             screen: modelData
 
-            anchors { top: true; bottom: true; left: true }
-            implicitWidth: 40
-            exclusiveZone: implicitWidth
+            anchors { bottom: true; left: true; right: true }
+            implicitHeight: 35
+            exclusiveZone: implicitHeight
             color: root.bg
 
-            ColumnLayout {
+            RowLayout {
                 anchors.fill: parent
-                anchors.topMargin: 10
-                anchors.bottomMargin: 10
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
                 spacing: 12
 
                 // ---------- workspaces ----------
@@ -143,7 +177,7 @@ Scope {
                         readonly property bool focused: Hyprland.focusedWorkspace?.id === wsId
                         readonly property bool exists: Hyprland.workspaces.values.some(w => w.id === wsId)
 
-                        Layout.alignment: Qt.AlignHCenter
+                        Layout.alignment: Qt.AlignVCenter
                         implicitWidth: 28; implicitHeight: 28
                         radius: 8
                         color: focused ? root.accent : "transparent"
@@ -162,36 +196,30 @@ Scope {
                     }
                 }
 
-                Item { Layout.fillHeight: true }
-
-                // ---------- active window title (vertical text or rotated) ----------
+                // ---------- titre fenêtre active (centré) ----------
                 Item {
-                    Layout.alignment: Qt.AlignHCenter
                     Layout.fillWidth: true
-                    Layout.maximumHeight: 200
-                    visible: Hyprland.focusedWindow !== null && Hyprland.focusedWindow.title.length > 0
+                    Layout.fillHeight: true
 
                     Text {
                         anchors.centerIn: parent
+                        width: Math.min(implicitWidth, parent.width)
+                        visible: text.length > 0
                         text: Hyprland.focusedWindow ? Hyprland.focusedWindow.title : ""
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                         font.bold: true
+                        font.family: root.font
                         color: root.dim
                         elide: Text.ElideRight
-                        // Rotation pour s'adapter proprement à la barre verticale étroite (40px)
-                        rotation: -90
-                        width: 160
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
 
-                Item { Layout.fillHeight: true }
-
                 // ---------- media ----------
-                ColumnLayout {
+                RowLayout {
                     visible: root.player !== null
                     spacing: 8
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.alignment: Qt.AlignVCenter
 
                     Ico {
                         text: "\uf048"
@@ -210,15 +238,13 @@ Scope {
                     }
                 }
 
-                Item { Layout.fillHeight: true }
-
                 // ---------- tray ----------
                 Repeater {
                     model: SystemTray.items
                     MouseArea {
                         id: trayItem
                         required property var modelData
-                        Layout.alignment: Qt.AlignHCenter
+                        Layout.alignment: Qt.AlignVCenter
                         implicitWidth: 20; implicitHeight: 20
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
@@ -245,18 +271,24 @@ Scope {
                 }
 
                 // ---------- son ----------
-                ColumnLayout {
-                    spacing: 2
-                    Layout.alignment: Qt.AlignHCenter
-                    Ico {
-                        text: root.muted ? "\uf6a9" : "\uf028"
-                        color: root.muted ? root.warn : root.fg
-                    }
-                    Text {
-                        text: root.volume
-                        color: root.fg
-                        font.pixelSize: 10
-                        Layout.alignment: Qt.AlignHCenter
+                Item {
+                    Layout.alignment: Qt.AlignVCenter
+                    implicitWidth: soundRow.implicitWidth
+                    implicitHeight: soundRow.implicitHeight
+
+                    RowLayout {
+                        id: soundRow
+                        spacing: 4
+                        Ico {
+                            text: root.muted ? "\uf6a9" : "\uf028"
+                            color: root.muted ? root.warn : root.fg
+                        }
+                        Text {
+                            text: root.volume
+                            color: root.fg
+                            font.family: root.font
+                            font.pixelSize: 12
+                        }
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -269,16 +301,22 @@ Scope {
                     }
                 }
 
-                // ---------- brightness ----------
-                ColumnLayout {
-                    spacing: 2
-                    Layout.alignment: Qt.AlignHCenter
-                    Ico { text: "\uf185" }
-                    Text {
-                        text: root.brightness
-                        color: root.fg
-                        font.pixelSize: 10
-                        Layout.alignment: Qt.AlignHCenter
+                // ---------- luminosité ----------
+                Item {
+                    Layout.alignment: Qt.AlignVCenter
+                    implicitWidth: briRow.implicitWidth
+                    implicitHeight: briRow.implicitHeight
+
+                    RowLayout {
+                        id: briRow
+                        spacing: 4
+                        Ico { text: "\uf185" }
+                        Text {
+                            text: root.brightness
+                            color: root.fg
+                            font.family: root.font
+                            font.pixelSize: 12
+                        }
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -289,14 +327,34 @@ Scope {
                     }
                 }
 
+                // ---------- batterie ----------
+                RowLayout {
+                    visible: root.batPresent
+                    spacing: 4
+                    Layout.alignment: Qt.AlignVCenter
+
+                    readonly property bool low: root.batPercent <= 15 && !root.batCharging
+
+                    Ico {
+                        text: root.batIcon()
+                        color: parent.low ? root.warn : (root.batCharging ? root.accent : root.fg)
+                    }
+                    Text {
+                        text: root.batPercent + "%"
+                        color: parent.low ? root.warn : root.fg
+                        font.family: root.font
+                        font.pixelSize: 12
+                    }
+                }
+
                 // ---------- heure ----------
                 Text {
-                    Layout.alignment: Qt.AlignHCenter
-                    horizontalAlignment: Text.AlignHCenter
+                    Layout.alignment: Qt.AlignVCenter
                     color: root.fg
                     font.pixelSize: 13
+                    font.family: root.font
                     font.bold: true
-                    text: Qt.formatDateTime(clock.date, "HH") + "\n" + Qt.formatDateTime(clock.date, "mm")
+                    text: Qt.formatDateTime(clock.date, "HH:mm")
                 }
             }
         }

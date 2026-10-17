@@ -29,7 +29,8 @@ Scope {
     property bool aiActive: false
     property string aiToolName: ""
     property int aiCount: 0
-    readonly property var aiTools: ({ claude: "Claude", opencode: "OpenCode", codex: "Codex" })
+    property string vibe_cli: "Vibe CLI"
+    readonly property var aiTools: ({ claude: "Claude", opencode: "OpenCode", codex: "Codex", vibe_cli: "Mistral Vibe" })
 
     property int brightness: 0
 
@@ -176,14 +177,11 @@ Scope {
                 height: 610
                 anchors.right: parent.right
                 anchors.rightMargin: 16
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: shown ? 16 : -(height + 20)
+                anchors.top: parent.top
+                anchors.topMargin: shown ? 16 : -(height + 20)
 
                 color: root.colBg
-                topLeftRadius: 28
-                bottomLeftRadius: 28
-                topRightRadius: 28
-                bottomRightRadius: 0
+                radius: 28
                 border.color: root.colSelection
                 border.width: 1
 
@@ -196,7 +194,7 @@ Scope {
                     function onOpenChanged() { card.shown = root.open }
                 }
 
-                Behavior on anchors.bottomMargin {
+                Behavior on anchors.topMargin {
                     NumberAnimation { duration: 350; easing.type: Easing.OutQuint }
                 }
                 Behavior on opacity {
