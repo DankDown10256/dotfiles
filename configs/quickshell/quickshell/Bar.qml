@@ -76,7 +76,7 @@ Scope {
     }
 
     PanelWindow {
-        anchors.bottom: true
+        anchors.left: true
         margins.bottom: (root.barVisible ? 32 : 0) + 12
         implicitWidth: 280
         implicitHeight: 64
@@ -297,10 +297,10 @@ Scope {
 
     component Ico: Text {
         color: root.fg
-        font.pixelSize: 14
+        font.pixelSize: 13
         font.family: root.font
         verticalAlignment: Text.AlignVCenter
-        Layout.alignment: Qt.AlignVCenter
+        Layout.alignment: Qt.AlignCenter
     }
 
 
@@ -313,25 +313,25 @@ Scope {
             screen: modelData
             visible: root.barVisible
 
-            anchors { bottom: true; left: true; right: true }
-            implicitHeight: 32
-            exclusiveZone: root.barVisible ? implicitHeight : 0
+            anchors { top: true; bottom: true; left: true }
+            implicitWidth: 40
+            exclusiveZone: root.barVisible ? implicitWidth : 0
             color: root.bg
 
-            RowLayout {
+            ColumnLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                spacing: 16
+                anchors.topMargin: 10
+                anchors.bottomMargin: 10
+                spacing: 12
 
                 Rectangle {
-                    Layout.alignment: Qt.AlignVCenter
+                    Layout.alignment: Qt.AlignHCenter
                     implicitWidth: workspaceRow.implicitWidth + 8
-                    implicitHeight: 28
+                    implicitHeight: workspaceRow.implicitHeight + 8
                     radius: 8
                     color: "transparent"
 
-                    RowLayout {
+                    ColumnLayout {
                         id: workspaceRow
                         anchors.centerIn: parent
                         spacing: 4
@@ -345,17 +345,13 @@ Scope {
                                 readonly property bool focused: Hyprland.focusedWorkspace?.id === wsId
                                 readonly property bool exists: Hyprland.workspaces.values.some(w => w.id === wsId)
 
-                                Layout.alignment: Qt.AlignVCenter
-                                implicitWidth: focused ? 28 : 20
-                                implicitHeight: 28
+                                Layout.alignment: Qt.AlignHCenter
+                                implicitWidth: 24
+                                implicitHeight: 24
                                 radius: 8
                                 color: workspaceMouse.containsMouse
                                     ? root.colors.cSurface
                                     : "transparent"
-
-                                Behavior on implicitWidth {
-                                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-                                }
 
                                 Behavior on color {
                                     ColorAnimation { duration: 120 }
@@ -363,13 +359,13 @@ Scope {
 
                                 Rectangle {
                                     anchors.centerIn: parent
-                                    width: ws.focused ? 20 : 6
-                                    height: 6
-                                    radius: 3
+                                    width: 4
+                                    height: ws.focused ? 16 : 4
+                                    radius: 2
                                     color: ws.focused ? root.accent
                                         : ws.exists ? root.dim : root.colors.cSelection
 
-                                    Behavior on width {
+                                    Behavior on height {
                                         NumberAnimation {
                                             duration: 180
                                             easing.type: Easing.OutCubic
@@ -396,9 +392,9 @@ Scope {
                     Layout.fillHeight: true
 
                     Text {
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.min(implicitWidth, parent.width, 280)
+                        anchors.centerIn: parent
+                        width: Math.min(implicitWidth, parent.height, 280)
+                        rotation: -90
                         visible: text.length > 0
                         text: Hyprland.focusedWindow ? Hyprland.focusedWindow.title : ""
                         font.pixelSize: 11
@@ -406,28 +402,28 @@ Scope {
                         font.family: "sans-serif"
                         color: root.dim
                         elide: Text.ElideRight
-                        horizontalAlignment: Text.AlignLeft
+                        horizontalAlignment: Text.AlignHCenter
                     }
                 }
 
                 Rectangle {
-                    Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: statusRow.implicitWidth + 16
-                    implicitHeight: 28
+                    Layout.alignment: Qt.AlignHCenter
+                    implicitWidth: statusRow.implicitWidth + 8
+                    implicitHeight: statusRow.implicitHeight + 8
                     radius: 8
                     color: "transparent"
 
-                    RowLayout {
+                    ColumnLayout {
                         id: statusRow
                         anchors.centerIn: parent
-                        spacing: 12
+                        spacing: 10
 
                         Repeater {
                             model: SystemTray.items
                             MouseArea {
                                 id: trayItem
                                 required property var modelData
-                                Layout.alignment: Qt.AlignVCenter
+                                Layout.alignment: Qt.AlignHCenter
                                 implicitWidth: 20; implicitHeight: 20
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
 
@@ -453,7 +449,7 @@ Scope {
                         }
 
                         Item {
-                            Layout.alignment: Qt.AlignVCenter
+                            Layout.alignment: Qt.AlignHCenter
                             implicitWidth: Math.max(24, soundRow.implicitWidth)
                             implicitHeight: 24
 
@@ -485,7 +481,7 @@ Scope {
                         }
 
                         Item {
-                            Layout.alignment: Qt.AlignVCenter
+                            Layout.alignment: Qt.AlignHCenter
                             implicitWidth: briRow.implicitWidth
                             implicitHeight: briRow.implicitHeight
                             visible: false
@@ -510,10 +506,10 @@ Scope {
                             }
                         }
 
-                        RowLayout {
+                        ColumnLayout {
                             visible: root.batPresent
                             spacing: 4
-                            Layout.alignment: Qt.AlignVCenter
+                            Layout.alignment: Qt.AlignHCenter
 
                             readonly property bool low: root.batPercent <= 15 && !root.batCharging
 
@@ -522,26 +518,28 @@ Scope {
                                 color: parent.low ? root.warn : (root.batCharging ? root.accent : root.fg)
                             }
                             Text {
+                                Layout.alignment: Qt.AlignHCenter
                                 text: root.batPercent + "%"
                                 color: parent.low ? root.warn : root.fg
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: 10
                             }
                         }
 
                         Text {
-                            Layout.alignment: Qt.AlignVCenter
+                            Layout.alignment: Qt.AlignHCenter
+                            horizontalAlignment: Text.AlignHCenter
                             color: root.fg
-                            font.pixelSize: 12
+                            font.pixelSize: 11
                             font.family: root.font
                             font.bold: false
-                            text: Qt.formatDateTime(clock.date, "HH:mm")
+                            text: Qt.formatDateTime(clock.date, "HH\nmm")
                         }
 
                         Rectangle {
-                            Layout.alignment: Qt.AlignVCenter
-                            implicitWidth: 24
-                            implicitHeight: 24
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: 28
+                            implicitHeight: 28
                             radius: 8
                             color: controlMouse.containsMouse ? root.colors.cSelection
                                 : "transparent"
