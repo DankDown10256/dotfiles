@@ -168,7 +168,7 @@ Scope {
 
     Timer {
         id: closeTimer
-        interval: 200
+        interval: 240
         onTriggered: root.alive = false
     }
 
@@ -201,31 +201,27 @@ Scope {
 
             Rectangle {
                 id: card
-                width: Math.min(360, parent.width - 32)
+                width: Math.min(880, parent.width - 32)
                 height: Math.min(
-                    controlsContent.implicitHeight + 32,
-                    560,
-                    parent.height - root.barInset - 32
+                    controlsContent.implicitHeight + 56,
+                    parent.height
                 )
-                anchors.right: parent.right
-                anchors.rightMargin: 16
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: root.barInset + 12
-                scale: shown ? 1 : 0.98
-                transformOrigin: Item.BottomRight
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: -24
 
                 color: root.colSurface
-                radius: 20
+                radius: 24
                 border.width: 1
                 border.color: Qt.alpha(root.colors.cBorder, 0.65)
 
                 transform: Translate {
-                    y: card.shown ? 0 : 8
+                    y: card.shown ? 0 : -card.height
 
                     Behavior on y {
                         NumberAnimation {
-                            duration: card.shown ? 200 : 160
-                            easing.type: Easing.OutCubic
+                            duration: card.shown ? 320 : 220
+                            easing.type: card.shown
+                                ? Easing.OutQuint : Easing.InCubic
                         }
                     }
                 }
@@ -241,44 +237,30 @@ Scope {
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: card.shown ? 200 : 160
-                        easing.type: Easing.OutCubic
-                    }
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: card.shown ? 200 : 160
+                        duration: card.shown ? 180 : 200
                         easing.type: Easing.OutCubic
                     }
                 }
 
                 MouseArea { anchors.fill: parent }
 
-                ScrollView {
-                    id: controlsScroll
+                Item {
                     anchors.fill: parent
                     anchors.margins: 16
-                    contentWidth: availableWidth
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                    anchors.topMargin: 40
                     focus: true
                     Keys.onEscapePressed: root.open = false
 
-                    ColumnLayout {
+                    GridLayout {
                         id: controlsContent
-                        width: controlsScroll.availableWidth
-                        spacing: 8
-
-                        Text {
-                            text: "Espace de travail"
-                            font.family: "sans-serif"
-                            font.pixelSize: 11
-                            font.bold: true
-                            color: root.colMuted
-                        }
+                        width: parent.width
+                        columns: 3
+                        columnSpacing: 12
+                        rowSpacing: 10
 
                         RowLayout {
                             Layout.fillWidth: true
+                            Layout.columnSpan: 3
                             spacing: 10
 
                             Text {
@@ -313,6 +295,7 @@ Scope {
 
                         Rectangle {
                             Layout.fillWidth: true
+                            Layout.columnSpan: 3
                             Layout.preferredHeight: 40
                             color: root.colors.cElevated
                             radius: 12
@@ -342,15 +325,10 @@ Scope {
                             }
                         }
 
-                        Text {
-                            text: "Concentration"
-                            font.family: "sans-serif"
-                            font.pixelSize: 11
-                            color: root.colMuted
-                        }
-
                         RowLayout {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: 1
                             spacing: 10
 
                             Rectangle {
@@ -438,6 +416,8 @@ Scope {
 
                         Rectangle {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: 1
                             Layout.preferredHeight: 60
                             color: root.colors.cElevated
                             radius: 12
@@ -487,6 +467,8 @@ Scope {
 
                         Rectangle {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: 1
                             Layout.preferredHeight: 56
                             color: root.colors.cElevated
                             radius: 12
@@ -527,6 +509,8 @@ Scope {
 
                         Rectangle {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: 1
                             Layout.preferredHeight: 72
                             color: root.colors.cElevated
                             radius: 12
@@ -600,6 +584,8 @@ Scope {
 
                         Rectangle {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: 1
                             Layout.preferredHeight: 72
                             color: root.colors.cElevated
                             radius: 12
@@ -672,6 +658,8 @@ Scope {
 
                         Rectangle {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: 1
                             Layout.preferredHeight: 88
                             visible: root.player !== null
                             color: root.colors.cElevated
@@ -734,21 +722,9 @@ Scope {
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 1
-                            color: root.colors.cBorder
-                        }
-
-                        Text {
-                            text: "Session"
-                            font.family: "sans-serif"
-                            font.pixelSize: 11
-                            color: root.colMuted
-                        }
-
                         RowLayout {
                             Layout.fillWidth: true
+                            Layout.columnSpan: 3
                             spacing: 10
 
                             Rectangle {

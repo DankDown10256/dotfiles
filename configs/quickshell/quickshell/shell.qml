@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Widgets
@@ -23,10 +24,11 @@ Scope {
 
     Launcher {
       colors: colors
-      barInset: desktopBar.barVisible ? 32 : 0
+      barInset: desktopBar.barVisible ? 40 : 0
     } 
     
     ControlCenter {
+      id: controlCenter
       colors: colors
       notifications: notificationCenter
       barInset: desktopBar.barVisible ? 32 : 0
@@ -51,11 +53,28 @@ Scope {
                 command: ["qs", "ipc", "call", "launcher", "toggle"]
             }
 
-            HotCorner {
-                colors: colors
+            PanelWindow {
                 screen: modelData
-                corner: "tr"
-                command: ["qs", "ipc", "call", "controlcenter", "toggle"]
+                anchors.top: true
+                implicitWidth: 240
+                implicitHeight: 4
+                color: "transparent"
+                exclusionMode: ExclusionMode.Ignore
+                WlrLayershell.layer: WlrLayer.Overlay
+                WlrLayershell.namespace: "controlcenter-hotspot"
+
+                Timer {
+                    id: controlCenterDwell
+                    interval: 120
+                    onTriggered: controlCenter.open = true
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: controlCenterDwell.restart()
+                    onExited: controlCenterDwell.stop()
+                }
             }
         }
     }

@@ -13,9 +13,9 @@ Rectangle {
     signal expired()
 
     width: 340
-    implicitHeight: mainLayout.implicitHeight + 32
+    implicitHeight: mainLayout.implicitHeight + 28
     color: root.colors.cSurface
-    radius: 20
+    radius: 12
     border.color: Qt.alpha(root.colors.cBorder, 0.65)
     border.width: 1
     opacity: shown ? 1 : 0
@@ -47,8 +47,8 @@ Rectangle {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 16
-        spacing: 8
+        anchors.margins: 14
+        spacing: 6
 
         Text {
             Layout.fillWidth: true

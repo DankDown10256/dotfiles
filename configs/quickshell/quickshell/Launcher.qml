@@ -138,17 +138,20 @@ Scope {
 
             Rectangle {
                 id: panel
-                width: Math.min(580, parent.width - 48)
+                width: Math.min(520, parent.width - launcher.barInset - 24)
                 height: Math.min(
-                    144 + Math.min(results.length, 6) * 48,
+                    144 + Math.min(results.length, 6) * 56,
                     parent.height - 48
                 )
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: -parent.height * 0.08 + (shown ? 0 : 8)
-                scale: shown ? 1 : 0.98
+                anchors.left: parent.left
+                anchors.leftMargin: launcher.barInset
+                anchors.top: parent.top
+                anchors.topMargin: 16
 
                 color: launcher.cSurface
-                radius: 20
+                radius: 16
+                topLeftRadius: 0
+                bottomLeftRadius: 0
                 border.width: 1
                 border.color: Qt.alpha(launcher.colors.cBorder, 0.65)
 
@@ -168,17 +171,14 @@ Scope {
                     }
                 }
 
-                Behavior on anchors.verticalCenterOffset {
-                    NumberAnimation {
-                        duration: panel.shown ? 200 : 160
-                        easing.type: Easing.OutCubic
-                    }
-                }
+                transform: Translate {
+                    x: panel.shown ? 0 : -24
 
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: panel.shown ? 200 : 160
-                        easing.type: Easing.OutCubic
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: panel.shown ? 200 : 160
+                            easing.type: Easing.OutCubic
+                        }
                     }
                 }
 
@@ -251,8 +251,8 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 8
+                    anchors.margins: 20
+                    spacing: 10
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -280,7 +280,7 @@ Scope {
                     TextField {
                         id: search
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 52
+                        Layout.preferredHeight: 46
                         placeholderText: launcher.projectMode
                             ? launcher.pendingProject !== ""
                                 ? "Ouvrir avec quel terminal ?"
@@ -293,7 +293,7 @@ Scope {
                         selectionColor: launcher.cAccent
                         selectedTextColor: launcher.cBg
                         font.family: "sans-serif"
-                        font.pixelSize: 18
+                        font.pixelSize: 16
                         leftPadding: 16
                         rightPadding: 16
                         background: Rectangle {
@@ -347,7 +347,7 @@ Scope {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         clip: true
-                        spacing: 4
+                        spacing: 6
                         currentIndex: 0
                         model: ScriptModel { values: panel.results }
 
@@ -358,7 +358,7 @@ Scope {
                             readonly property var entry: modelData
 
                             width: ListView.view.width
-                            height: 44
+                            height: 50
                             radius: 8
                             color: ListView.isCurrentItem
                                 ? launcher.cSel

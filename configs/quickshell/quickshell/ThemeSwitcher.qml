@@ -115,11 +115,11 @@ Scope {
 
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: shown ? 44 : 36
+                    anchors.bottomMargin: shown ? 24 : 16
 
                     width: Math.min(540, parent.width - 32)
-                    height: 56
-                    radius: 20
+                    height: 48
+                    radius: 14
 
                     color: root.colors.cSurface
                     border.width: 1

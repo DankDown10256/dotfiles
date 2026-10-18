@@ -320,9 +320,9 @@ Scope {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.topMargin: 10
-                anchors.bottomMargin: 10
-                spacing: 12
+                anchors.topMargin: 16
+                anchors.bottomMargin: 16
+                spacing: 16
 
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
@@ -334,7 +334,7 @@ Scope {
                     ColumnLayout {
                         id: workspaceRow
                         anchors.centerIn: parent
-                        spacing: 4
+                        spacing: 8
 
                         Repeater {
                             model: 5
@@ -416,7 +416,7 @@ Scope {
                     ColumnLayout {
                         id: statusRow
                         anchors.centerIn: parent
-                        spacing: 10
+                        spacing: 14
 
                         Repeater {
                             model: SystemTray.items
