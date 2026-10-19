@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Notifications
+import Quickshell.Widgets
 
 Rectangle {
     id: root
@@ -12,10 +13,10 @@ Rectangle {
     property bool shown: !popup
     signal expired()
 
-    width: 340
+    width: 320
     implicitHeight: mainLayout.implicitHeight + 28
     color: root.colors.cSurface
-    radius: 12
+    radius: 9
     border.color: Qt.alpha(root.colors.cBorder, 0.65)
     border.width: 1
     opacity: shown ? 1 : 0
@@ -47,18 +48,26 @@ Rectangle {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 14
+        anchors.margins: 12
         spacing: 6
 
-        Text {
+        RowLayout {
             Layout.fillWidth: true
-            text: root.notification.appName
-            textFormat: Text.PlainText
-            visible: text.length > 0
-            font.family: "sans-serif"
-            font.pixelSize: 11
-            color: root.colors.cMuted
-            elide: Text.ElideRight
+            spacing: 7
+            IconImage {
+                implicitSize: 17
+                source: Quickshell.iconPath(root.notification.appIcon || root.notification.desktopEntry || "application-x-executable")
+            }
+            Text {
+                Layout.fillWidth: true
+                text: root.notification.appName
+                textFormat: Text.PlainText
+                visible: text.length > 0
+                font.family: "sans-serif"
+                font.pixelSize: 11
+                color: root.colors.cMuted
+                elide: Text.ElideRight
+            }
         }
 
         RowLayout {

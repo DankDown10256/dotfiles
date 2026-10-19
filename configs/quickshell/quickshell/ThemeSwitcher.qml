@@ -19,6 +19,7 @@ Scope {
     }
 
     readonly property var themeModel: [
+        { id: "quattro", name: "Quattro", accent: "#d9a46c" },
         { id: "github-dark", name: "GitHub", accent: "#58a6ff" },
         { id: "catppuccin", name: "Catppuccin", accent: "#cba6f7" },
         { id: "warm", name: "Warm", accent: "#d97757" },
@@ -117,9 +118,9 @@ Scope {
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: shown ? 24 : 16
 
-                    width: Math.min(540, parent.width - 32)
-                    height: 48
-                    radius: 14
+                    width: Math.min(500, parent.width - 32)
+                    height: 44
+                    radius: 10
 
                     color: root.colors.cSurface
                     border.width: 1
@@ -214,7 +215,7 @@ Scope {
                                     readonly property bool selected:
                                         root.selectedIndex === index
 
-                                    width: (parent.width - 16) / 5
+                                    width: (parent.width - (root.themeModel.length - 1) * 4) / root.themeModel.length
                                     height: 32
                                     radius: 8
 

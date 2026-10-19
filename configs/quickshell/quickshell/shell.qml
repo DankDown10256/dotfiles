@@ -1,13 +1,4 @@
 import Quickshell
-import Quickshell.Wayland
-import Quickshell.Hyprland
-import Quickshell.Io
-import Quickshell.Widgets
-import Quickshell.Services.Pipewire
-import Quickshell.Services.SystemTray
-import Quickshell.Services.Mpris
-import QtQuick
-import QtQuick.Layouts
 import "."
 
 Scope {
@@ -26,6 +17,34 @@ Scope {
       colors: colors
       barInset: desktopBar.barVisible ? 40 : 0
     } 
+
+    WorkspaceOverview {
+      colors: colors
+    }
+
+    DevTools {
+      colors: colors
+    }
+
+    ClipboardHistory {
+      colors: colors
+    }
+
+    CaptureMenu {
+      id: captureMenu
+      colors: colors
+    }
+
+    SystemPanels {
+      id: systemPanels
+      colors: colors
+    }
+
+    SessionLock { colors: colors }
+
+    Utilities { colors: colors }
+
+    ShortcutBindings {}
     
     ControlCenter {
       id: controlCenter
@@ -36,46 +55,17 @@ Scope {
     Bar {
       id: desktopBar
       colors: colors
+      panels: systemPanels
+      notifications: notificationCenter
+      capture: captureMenu
+      controlCenter: controlCenter
     }
     ThemeSwitcher {
       colors: colors
     } 
-    Variants {
-        model: Quickshell.screens
-
-        Scope {
-            required property var modelData
-
-            HotCorner {
-                colors: colors
-                screen: modelData
-                corner: "bl"
-                command: ["qs", "ipc", "call", "launcher", "toggle"]
-            }
-
-            PanelWindow {
-                screen: modelData
-                anchors.top: true
-                implicitWidth: 240
-                implicitHeight: 4
-                color: "transparent"
-                exclusionMode: ExclusionMode.Ignore
-                WlrLayershell.layer: WlrLayer.Overlay
-                WlrLayershell.namespace: "controlcenter-hotspot"
-
-                Timer {
-                    id: controlCenterDwell
-                    interval: 120
-                    onTriggered: controlCenter.open = true
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: controlCenterDwell.restart()
-                    onExited: controlCenterDwell.stop()
-                }
-            }
-        }
+    ScreenHotspots {
+      colors: colors
+      controlCenter: controlCenter
+      barVisible: desktopBar.barVisible
     }
 }

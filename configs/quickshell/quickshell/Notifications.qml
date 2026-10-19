@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 
 Scope {
@@ -17,6 +18,16 @@ Scope {
 
     readonly property var history: server.trackedNotifications.values
         .filter(notification => !notification.transient).slice().reverse()
+    readonly property var historyGroups: {
+        const groups = []
+        for (const notification of history) {
+            const name = notification.appName || "Application"
+            let group = groups.find(item => item.name === name)
+            if (!group) { group = { name: name, items: [] }; groups.push(group) }
+            group.items.push(notification)
+        }
+        return groups
+    }
     readonly property var popups: server.trackedNotifications.values
         .filter(notification => root.popupIds.includes(notification.id))
         .slice().reverse()
@@ -95,6 +106,7 @@ Scope {
     }
 
     PanelWindow {
+        screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0]
         anchors { top: true; right: true }
         margins { top: 16; right: 16 }
         implicitWidth: Math.min(340, screen.width - 32)
@@ -136,6 +148,7 @@ Scope {
         active: root.alive
 
         PanelWindow {
+            screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0]
             anchors { top: true; bottom: true; left: true; right: true }
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
@@ -152,14 +165,14 @@ Scope {
                 id: card
                 anchors.top: parent.top
                 anchors.right: parent.right
-                anchors.margins: 16
+                anchors.margins: 14
                 width: Math.min(372, parent.width - 32)
                 height: Math.min(
                     parent.height - 32,
                     root.history.length === 0 ? 160
                         : Math.min(560, historyList.contentHeight + 80)
                 )
-                radius: 20
+                radius: 14
                 color: root.colors.cSurface
                 border.width: 1
                 border.color: Qt.alpha(root.colors.cBorder, 0.65)
@@ -201,7 +214,7 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 16
+                    anchors.margins: 14
                     spacing: 12
 
                     RowLayout {
@@ -215,6 +228,14 @@ Scope {
                             font.pixelSize: 13
                             color: root.colors.cText
                             elide: Text.ElideRight
+                        }
+
+                        Button {
+                            implicitHeight: 32
+                            text: root.dnd ? "DND actif" : "DND"
+                            onClicked: root.dnd = !root.dnd
+                            contentItem: Text { text: parent.text; color: root.dnd ? root.colors.cAccent : root.colors.cText; font.pixelSize: 10; verticalAlignment: Text.AlignVCenter; horizontalAlignment: Text.AlignHCenter }
+                            background: Rectangle { radius: 8; color: root.dnd ? root.colors.cSelection : root.colors.cElevated }
                         }
 
                         Button {
@@ -258,22 +279,44 @@ Scope {
                         color: root.colors.cMuted
                     }
 
-                    ListView {
+                    Flickable {
                         id: historyList
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         visible: root.history.length > 0
-                        spacing: 8
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
-                        model: ScriptModel { values: root.history }
+                        contentWidth: width
+                        contentHeight: historyColumn.implicitHeight
 
-                        delegate: NotificationPopup {
-                            required property var modelData
+                        ColumnLayout {
+                            id: historyColumn
                             width: historyList.width
-                            notification: modelData
-                            colors: root.colors
-                            popup: false
+                            spacing: 12
+                            Repeater {
+                                model: root.historyGroups
+                                delegate: ColumnLayout {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    spacing: 6
+                                    Text {
+                                        text: modelData.name + " · " + modelData.items.length
+                                        color: root.colors.cMuted
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                    }
+                                    Repeater {
+                                        model: modelData.items
+                                        delegate: NotificationPopup {
+                                            required property var modelData
+                                            Layout.fillWidth: true
+                                            notification: modelData
+                                            colors: root.colors
+                                            popup: false
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

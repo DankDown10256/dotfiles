@@ -5,16 +5,29 @@ QtObject {
     id: colors
 
     // Scheme actif :
-    // github-dark, catppuccin, warm, e-ink, claude-light
-    property string scheme: "github-dark"
+    // quattro, github-dark, catppuccin, warm, e-ink, claude-light
+    property string scheme: "quattro"
 
     readonly property var availableSchemes: [
+        { id: "quattro", name: "Quattro" },
         { id: "github-dark", name: "GitHub Dark" },
         { id: "catppuccin", name: "Catppuccin Mocha" },
         { id: "warm", name: "Warm Dark" },
         { id: "e-ink", name: "E-Ink" },
         { id: "claude-light", name: "Claude Light" }
     ]
+
+    readonly property color qtBg: "#111315"
+    readonly property color qtSurface: "#191c1e"
+    readonly property color qtElevated: "#23272a"
+    readonly property color qtSelection: "#30363a"
+    readonly property color qtAccent: "#d9a46c"
+    readonly property color qtText: "#ebe9e4"
+    readonly property color qtMuted: "#9a9b99"
+    readonly property color qtBorder: "#353a3d"
+    readonly property color qtDanger: "#e07570"
+    readonly property color qtSuccess: "#9fc49b"
+    readonly property color qtWarning: "#deb76d"
 
     function setScheme(name) {
         for (const item of availableSchemes) {
@@ -111,66 +124,77 @@ QtObject {
     // ============================================================
 
     readonly property color cBg:
+        scheme === "quattro" ? qtBg :
         scheme === "catppuccin" ? ccBg :
         scheme === "warm" ? wdBg :
         scheme === "e-ink" ? eiBg :
         scheme === "claude-light" ? clBg : ghBg
 
     readonly property color cSurface:
+        scheme === "quattro" ? qtSurface :
         scheme === "catppuccin" ? ccSurface :
         scheme === "warm" ? wdSurface :
         scheme === "e-ink" ? eiSurface :
         scheme === "claude-light" ? clSurface : ghSurface
 
     readonly property color cElevated:
+        scheme === "quattro" ? qtElevated :
         scheme === "catppuccin" ? ccElevated :
         scheme === "warm" ? wdElevated :
         scheme === "e-ink" ? eiElevated :
         scheme === "claude-light" ? clElevated : ghElevated
 
     readonly property color cSelection:
+        scheme === "quattro" ? qtSelection :
         scheme === "catppuccin" ? ccSelection :
         scheme === "warm" ? wdSelection :
         scheme === "e-ink" ? eiSelection :
         scheme === "claude-light" ? clSelection : ghSelection
 
     readonly property color cAccent:
+        scheme === "quattro" ? qtAccent :
         scheme === "catppuccin" ? ccAccent :
         scheme === "warm" ? wdAccent :
         scheme === "e-ink" ? eiAccent :
         scheme === "claude-light" ? clAccent : ghAccent
 
     readonly property color cText:
+        scheme === "quattro" ? qtText :
         scheme === "catppuccin" ? ccText :
         scheme === "warm" ? wdText :
         scheme === "e-ink" ? eiText :
         scheme === "claude-light" ? clText : ghText
 
     readonly property color cMuted:
+        scheme === "quattro" ? qtMuted :
         scheme === "catppuccin" ? ccMuted :
         scheme === "warm" ? wdMuted :
         scheme === "e-ink" ? eiMuted :
         scheme === "claude-light" ? clMuted : ghMuted
 
     readonly property color cBorder:
+        scheme === "quattro" ? qtBorder :
         scheme === "catppuccin" ? ccBorder :
         scheme === "warm" ? wdBorder :
         scheme === "e-ink" ? eiBorder :
         scheme === "claude-light" ? clBorder : ghBorder
 
     readonly property color cDanger:
+        scheme === "quattro" ? qtDanger :
         scheme === "catppuccin" ? ccDanger :
         scheme === "warm" ? wdDanger :
         scheme === "e-ink" ? eiDanger :
         scheme === "claude-light" ? clDanger : ghDanger
 
     readonly property color cSuccess:
+        scheme === "quattro" ? qtSuccess :
         scheme === "catppuccin" ? ccSuccess :
         scheme === "warm" ? wdSuccess :
         scheme === "e-ink" ? eiSuccess :
         scheme === "claude-light" ? clSuccess : ghSuccess
 
     readonly property color cWarning:
+        scheme === "quattro" ? qtWarning :
         scheme === "catppuccin" ? ccWarning :
         scheme === "warm" ? wdWarning :
         scheme === "e-ink" ? eiWarning :

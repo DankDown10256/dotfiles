@@ -6,12 +6,17 @@ import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Services.Mpris
 import Quickshell.Wayland
+import Quickshell.Hyprland
 
 Scope {
     id: root
 
     property bool open: false
     property bool alive: false
+    property var targetScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0]
+
+    function showOn(screen) { targetScreen = screen; open = true }
+    function toggleOn(screen) { targetScreen = screen; open = !open }
 
     
     readonly property color colBg:        colors.cBg
@@ -41,6 +46,8 @@ Scope {
     readonly property var aiTools: ({ claude: "Claude", opencode: "OpenCode", codex: "Codex" })
 
     property int brightness: 0
+    property bool brightnessAvailable: false
+    property bool wifiEnabled: true
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property int volume: sink?.audio ? Math.round(sink.audio.volume * 100) : 0
@@ -64,7 +71,9 @@ Scope {
 
     IpcHandler {
         target: "controlcenter"
-        function toggle(): void { root.open = !root.open }
+        function toggle(): void {
+            root.toggleOn(Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0])
+        }
     }
 
     QtObject {
@@ -90,22 +99,37 @@ Scope {
 
     Process {
         id: wifiProc
-        command: ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi", "list", "--rescan", "no"]
+        command: ["env", "LC_ALL=C", "nmcli", "-t", "-f", "active,ssid", "dev", "wifi", "list", "--rescan", "no"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const line = text.split("\n").find(l => l.startsWith("oui:"))
+                const line = text.split("\n").find(l => l.startsWith("yes:"))
                 wifiInfo.ssid = line ? line.substring(4) : "Non connecté"
             }
         }
     }
 
     Process {
+        id: wifiRadioProc
+        command: ["env", "LC_ALL=C", "nmcli", "radio", "wifi"]
+        stdout: StdioCollector {
+            onStreamFinished: root.wifiEnabled = text.trim() === "enabled"
+        }
+    }
+
+    Process {
+        id: wifiToggleProc
+        command: ["nmcli", "radio", "wifi", root.wifiEnabled ? "off" : "on"]
+        onRunningChanged: if (!running) wifiRadioProc.running = true
+    }
+
+    Process {
         id: briProc
-        command: ["brightnessctl", "-m"]
+        command: ["sh", "-c", "command -v brightnessctl >/dev/null && brightnessctl -m"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const p = text.trim().split(",")
-                if (p.length >= 4) root.brightness = parseInt(p[3]) || 0
+                root.brightnessAvailable = p.length >= 4
+                if (root.brightnessAvailable) root.brightness = parseInt(p[3]) || 0
             }
         }
     }
@@ -140,6 +164,7 @@ Scope {
         triggeredOnStart: true
         onTriggered: {
             wifiProc.running = true
+            wifiRadioProc.running = true
             briProc.running = true
             aiDetectorProc.running = true
         }
@@ -187,6 +212,7 @@ Scope {
         active: root.alive
 
         PanelWindow {
+            screen: root.targetScreen
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: root.open
                 ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -201,16 +227,18 @@ Scope {
 
             Rectangle {
                 id: card
-                width: Math.min(880, parent.width - 32)
+                width: Math.min(500, parent.width - 24)
                 height: Math.min(
-                    controlsContent.implicitHeight + 56,
-                    parent.height
+                    controlsContent.implicitHeight + 28,
+                    parent.height - (root.barInset > 0 ? 36 : 8) - 12
                 )
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: -24
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.topMargin: root.barInset > 0 ? 36 : 8
+                anchors.rightMargin: 12
 
                 color: root.colSurface
-                radius: 24
+                radius: 14
                 border.width: 1
                 border.color: Qt.alpha(root.colors.cBorder, 0.65)
 
@@ -244,23 +272,25 @@ Scope {
 
                 MouseArea { anchors.fill: parent }
 
-                Item {
+                Flickable {
                     anchors.fill: parent
-                    anchors.margins: 16
-                    anchors.topMargin: 40
+                    anchors.margins: 14
+                    contentWidth: width
+                    contentHeight: controlsContent.implicitHeight
+                    clip: true
                     focus: true
                     Keys.onEscapePressed: root.open = false
 
                     GridLayout {
                         id: controlsContent
                         width: parent.width
-                        columns: 3
-                        columnSpacing: 12
-                        rowSpacing: 10
+                        columns: 2
+                        columnSpacing: 8
+                        rowSpacing: 8
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Layout.columnSpan: 3
+                            Layout.columnSpan: 2
                             spacing: 10
 
                             Text {
@@ -295,10 +325,10 @@ Scope {
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.columnSpan: 3
+                            Layout.columnSpan: 2
                             Layout.preferredHeight: 40
                             color: root.colors.cElevated
-                            radius: 12
+                            radius: 9
                             visible: root.aiActive
                             border.width: 0
 
@@ -420,7 +450,7 @@ Scope {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 60
                             color: root.colors.cElevated
-                            radius: 12
+                            radius: 9
 
                             ColumnLayout {
                                 anchors.fill: parent
@@ -440,6 +470,10 @@ Scope {
                                         text: root.pomoRunning ? "En cours · double-clic : reset" : "En pause"
                                         font.pixelSize: 10
                                         color: root.colMuted
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        horizontalAlignment: Text.AlignRight
+                                        elide: Text.ElideRight
                                     }
                                 }
 
@@ -469,9 +503,9 @@ Scope {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
                             Layout.preferredWidth: 1
-                            Layout.preferredHeight: 56
+                            Layout.preferredHeight: 64
                             color: root.colors.cElevated
-                            radius: 12
+                            radius: 9
 
                             RowLayout {
                                 anchors.fill: parent
@@ -482,7 +516,7 @@ Scope {
                                     text: "\uF1EB"
                                     font.family: "JetBrainsMono Nerd Font"
                                     font.pixelSize: 16
-                                    color: root.colMuted
+                                    color: root.wifiEnabled ? root.colAccent : root.colMuted
                                 }
 
                                 ColumnLayout {
@@ -490,18 +524,37 @@ Scope {
                                     Layout.fillWidth: true
 
                                     Text {
-                                        text: "RÉSEAU WI-FI"
+                                        text: root.wifiEnabled ? "WI-FI · ACTIVÉ" : "WI-FI · DÉSACTIVÉ"
                                         font.pixelSize: 11
                                         color: root.colMuted
                                     }
 
                                     Text {
-                                        text: wifiInfo.ssid
+                                        text: root.wifiEnabled ? wifiInfo.ssid : "Réseau désactivé"
                                         font.pixelSize: 13
                                         font.bold: true
                                         color: root.colText
                                         elide: Text.ElideRight
                                         Layout.fillWidth: true
+                                    }
+                                }
+
+                                Rectangle {
+                                    implicitWidth: 62
+                                    implicitHeight: 30
+                                    radius: 7
+                                    color: wifiToggleMouse.containsMouse ? root.colSelection : root.colSurface
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: root.wifiEnabled ? "Couper" : "Activer"
+                                        color: root.colText
+                                        font.pixelSize: 10
+                                    }
+                                    MouseArea {
+                                        id: wifiToggleMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onClicked: wifiToggleProc.running = true
                                     }
                                 }
                             }
@@ -513,7 +566,7 @@ Scope {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 72
                             color: root.colors.cElevated
-                            radius: 12
+                            radius: 9
 
                             RowLayout {
                                 anchors.fill: parent
@@ -588,7 +641,7 @@ Scope {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 72
                             color: root.colors.cElevated
-                            radius: 12
+                            radius: 9
 
                             RowLayout {
                                 anchors.fill: parent
@@ -621,6 +674,7 @@ Scope {
                                         stepSize: 1
                                         implicitHeight: 28
                                         value: root.brightness
+                                        enabled: root.brightnessAvailable
                                         background: Rectangle {
                                             x: brightnessSlider.leftPadding
                                             y: brightnessSlider.topPadding + brightnessSlider.availableHeight / 2 - 4
@@ -663,7 +717,7 @@ Scope {
                             Layout.preferredHeight: 88
                             visible: root.player !== null
                             color: root.colors.cElevated
-                            radius: 12
+                            radius: 9
 
                             ColumnLayout {
                                 anchors.fill: parent
@@ -724,7 +778,7 @@ Scope {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Layout.columnSpan: 3
+                            Layout.columnSpan: 2
                             spacing: 10
 
                             Rectangle {
@@ -741,7 +795,7 @@ Scope {
                                 }
                                 MouseArea {
                                     anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["hyprlock"])
+                                    onClicked: Quickshell.execDetached(["qs", "ipc", "call", "session", "lock"])
                                 }
                             }
 
