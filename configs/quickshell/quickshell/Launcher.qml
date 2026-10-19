@@ -42,6 +42,14 @@ Scope {
         launcher.open = false
     }
 
+    function launchInTerminal(app) {
+        const cwd = app.workingDirectory || Quickshell.env("HOME")
+        Quickshell.execDetached(
+            ["kitty", "--directory", cwd].concat(app.command)
+        )
+        launcher.open = false
+    }
+
     Process {
         id: projectScanner
         command: [
@@ -92,7 +100,13 @@ Scope {
         function toggle(): void {
             launcher.windowMode = false
             launcher.projectMode = false
-            launcher.open = !launcher.open
+            if (launcher.open) {
+                launcher.open = false
+            } else {
+                launcher.availableTerminals = []
+                terminalScanner.running = true
+                launcher.open = true
+            }
         }
 
         function windows(): void {
@@ -235,12 +249,20 @@ Scope {
                         launcher.open = false;
                         return;
                     }
+                    if (entry.runInTerminal) {
+                        launcher.launchInTerminal(entry);
+                        return;
+                    }
                     entry.execute();
                     launcher.open = false;
                 }
                 
                 function webSearch(q) {
-                    Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(q)]);
+                    const domainPattern = /^(?:https?:\/\/)?(?:[\w-]+\.)+[a-z]{2,}(?::\d+)?(?:\/\S*)?$/i;
+                    const target = domainPattern.test(q)
+                        ? (q.match(/^https?:\/\//i) ? q : "https://" + q)
+                        : "https://duckduckgo.com/?q=" + encodeURIComponent(q);
+                    Quickshell.execDetached(["xdg-open", target]);
                     launcher.open = false;
                 }
                 
