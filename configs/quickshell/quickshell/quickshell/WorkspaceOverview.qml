@@ -54,12 +54,12 @@ Scope {
             Rectangle {
                 id: card
                 width: Math.min(900, parent.width - 32)
-                height: Math.min(620, parent.height - 32)
+                height: Math.min(560, parent.height - 32)
                 anchors.centerIn: parent
-                radius: 16
+                radius: 6
                 color: root.colors.cSurface
                 border.width: 1
-                border.color: Qt.alpha(root.colors.cBorder, 0.7)
+                border.color: root.colors.cBorder
                 opacity: root.open ? 1 : 0
                 scale: root.open ? 1 : 0.98
 
@@ -70,15 +70,15 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 20
-                    spacing: 14
+                    anchors.margins: 12
+                    spacing: 10
 
                     RowLayout {
                         Layout.fillWidth: true
                         Text {
                             text: "Espaces de travail"
                             color: root.colors.cText
-                            font.pixelSize: 17
+                            font.pixelSize: 14
                             font.bold: true
                         }
                         Item { Layout.fillWidth: true }
@@ -108,7 +108,7 @@ Scope {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 Layout.minimumHeight: 100
-                                radius: 10
+                                radius: 6
                                 color: Hyprland.focusedWorkspace?.id === workspaceId
                                     ? root.colors.cSelection : root.colors.cElevated
                                 border.width: Hyprland.focusedWorkspace?.id === workspaceId ? 1 : 0
@@ -138,7 +138,7 @@ Scope {
                                             implicitHeight: 22
                                             radius: 5
                                             color: overviewMouse.containsMouse ? root.colors.cSurface : "transparent"
-                                            Text { anchors.centerIn: parent; text: "Ouvrir"; color: root.colors.cAccent; font.pixelSize: 9 }
+                                            Text { anchors.centerIn: parent; text: "Ouvrir"; color: root.colors.cAccent; font.pixelSize: 11 }
                                             MouseArea {
                                                 id: overviewMouse
                                                 anchors.fill: parent

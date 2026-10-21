@@ -35,7 +35,7 @@ Scope {
     property bool pomoIsWork: true
 
     required property var colors
-    property int barInset: 32
+    property int barInset: 30
 
     property var notifications: null
     readonly property bool dndActive: notifications?.dnd ?? false
@@ -227,29 +227,28 @@ Scope {
 
             Rectangle {
                 id: card
-                width: Math.min(500, parent.width - 24)
+                width: Math.min(420, parent.width - 24)
                 height: Math.min(
-                    controlsContent.implicitHeight + 28,
-                    parent.height - (root.barInset > 0 ? 36 : 8) - 12
+                    controlsContent.implicitHeight + 24,
+                    parent.height - root.barInset - 16
                 )
                 anchors.top: parent.top
                 anchors.right: parent.right
-                anchors.topMargin: root.barInset > 0 ? 36 : 8
+                anchors.topMargin: root.barInset + 8
                 anchors.rightMargin: 12
 
                 color: root.colSurface
-                radius: 14
+                radius: 6
                 border.width: 1
-                border.color: Qt.alpha(root.colors.cBorder, 0.65)
+                border.color: root.colors.cBorder
 
                 transform: Translate {
-                    y: card.shown ? 0 : -card.height
+                    y: card.shown ? 0 : -4
 
                     Behavior on y {
                         NumberAnimation {
-                            duration: card.shown ? 320 : 220
-                            easing.type: card.shown
-                                ? Easing.OutQuint : Easing.InCubic
+                            duration: 120
+                            easing.type: Easing.OutCubic
                         }
                     }
                 }
@@ -265,7 +264,7 @@ Scope {
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: card.shown ? 180 : 200
+                        duration: 120
                         easing.type: Easing.OutCubic
                     }
                 }
@@ -274,7 +273,7 @@ Scope {
 
                 Flickable {
                     anchors.fill: parent
-                    anchors.margins: 14
+                    anchors.margins: 12
                     contentWidth: width
                     contentHeight: controlsContent.implicitHeight
                     clip: true
@@ -296,7 +295,7 @@ Scope {
                             Text {
                                 text: userInfo.username
                                 font.family: "sans-serif"
-                                font.pixelSize: 18
+                                font.pixelSize: 14
                                 font.bold: true
                                 color: root.colText
                             }
@@ -306,7 +305,7 @@ Scope {
                             Text {
                                 id: clockText
                                 font.family: "sans-serif"
-                                font.pixelSize: 18
+                                font.pixelSize: 14
                                 font.bold: false
                                 color: root.colText
 
@@ -326,21 +325,21 @@ Scope {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.columnSpan: 2
-                            Layout.preferredHeight: 40
+                            Layout.preferredHeight: 36
                             color: root.colors.cElevated
-                            radius: 9
+                            radius: 6
                             visible: root.aiActive
                             border.width: 0
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 12
-                                spacing: 10
+                                anchors.margins: 8
+                                spacing: 8
 
                                 Text {
                                     text: "\uF121"
                                     font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 16
+                                    font.pixelSize: 14
                                     color: root.colAccent
                                 }
 
@@ -363,11 +362,11 @@ Scope {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 44
+                                Layout.preferredHeight: 36
                                 color: root.dndActive ? root.colSelection
                                     : silenceMouse.containsMouse
                                         ? root.colSelection : root.colors.cElevated
-                                radius: 8
+                                radius: 6
 
                                 Behavior on color {
                                     ColorAnimation { duration: 120 }
@@ -379,7 +378,7 @@ Scope {
                                     Text {
                                         text: "\uF1F8"
                                         font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 16
+                                        font.pixelSize: 14
                                         color: root.dndActive ? root.colAccent : root.colText
                                     }
                                     Text {
@@ -403,10 +402,10 @@ Scope {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 44
+                                Layout.preferredHeight: 36
                                 color: focusMouse.containsMouse
                                     ? root.colSelection : root.colors.cElevated
-                                radius: 8
+                                radius: 6
 
                                 Behavior on color {
                                     ColorAnimation { duration: 120 }
@@ -418,7 +417,7 @@ Scope {
                                     Text {
                                         text: "\uF2F2"
                                         font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 16
+                                        font.pixelSize: 14
                                         color: root.pomoRunning ? root.colAccent : root.colMuted
                                     }
                                     Text {
@@ -450,7 +449,7 @@ Scope {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 60
                             color: root.colors.cElevated
-                            radius: 9
+                            radius: 6
 
                             ColumnLayout {
                                 anchors.fill: parent
@@ -468,7 +467,7 @@ Scope {
                                     Item { Layout.fillWidth: true }
                                     Text {
                                         text: root.pomoRunning ? "En cours · double-clic : reset" : "En pause"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 11
                                         color: root.colMuted
                                         Layout.fillWidth: true
                                         Layout.minimumWidth: 0
@@ -492,7 +491,7 @@ Scope {
                                         radius: 3
 
                                         Behavior on width {
-                                            NumberAnimation { duration: 200 }
+                                            NumberAnimation { duration: 120 }
                                         }
                                     }
                                 }
@@ -503,19 +502,20 @@ Scope {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
                             Layout.preferredWidth: 1
-                            Layout.preferredHeight: 64
+                            Layout.columnSpan: 2
+                            Layout.preferredHeight: 56
                             color: root.colors.cElevated
-                            radius: 9
+                            radius: 6
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 12
-                                spacing: 12
+                                anchors.margins: 10
+                                spacing: 8
 
                                 Text {
                                     text: "\uF1EB"
                                     font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 16
+                                    font.pixelSize: 14
                                     color: root.wifiEnabled ? root.colAccent : root.colMuted
                                 }
 
@@ -527,6 +527,8 @@ Scope {
                                         text: root.wifiEnabled ? "WI-FI · ACTIVÉ" : "WI-FI · DÉSACTIVÉ"
                                         font.pixelSize: 11
                                         color: root.colMuted
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
                                     }
 
                                     Text {
@@ -541,14 +543,14 @@ Scope {
 
                                 Rectangle {
                                     implicitWidth: 62
-                                    implicitHeight: 30
-                                    radius: 7
+                                    implicitHeight: 28
+                                    radius: 4
                                     color: wifiToggleMouse.containsMouse ? root.colSelection : root.colSurface
                                     Text {
                                         anchors.centerIn: parent
                                         text: root.wifiEnabled ? "Couper" : "Activer"
                                         color: root.colText
-                                        font.pixelSize: 10
+                                        font.pixelSize: 11
                                     }
                                     MouseArea {
                                         id: wifiToggleMouse
@@ -566,17 +568,17 @@ Scope {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 72
                             color: root.colors.cElevated
-                            radius: 9
+                            radius: 6
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 12
-                                spacing: 12
+                                anchors.margins: 10
+                                spacing: 8
 
                                 Text {
                                     text: root.muted ? "\uF6A9" : "\uF028"
                                     font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 16
+                                    font.pixelSize: 14
                                     color: root.muted ? root.colDanger : root.colMuted
                                 }
 
@@ -588,7 +590,7 @@ Scope {
                                         Layout.fillWidth: true
                                         Text { text: "Volume"; font.pixelSize: 11; color: root.colText }
                                         Item { Layout.fillWidth: true }
-                                        Text { text: root.volume + "%"; font.pixelSize: 10; color: root.colMuted }
+                                        Text { text: root.volume + "%"; font.pixelSize: 11; color: root.colMuted }
                                     }
 
                                     Slider {
@@ -641,17 +643,17 @@ Scope {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 72
                             color: root.colors.cElevated
-                            radius: 9
+                            radius: 6
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 12
-                                spacing: 12
+                                anchors.margins: 10
+                                spacing: 8
 
                                 Text {
                                     text: "\uF185"
                                     font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 16
+                                    font.pixelSize: 14
                                     color: root.colMuted
                                 }
 
@@ -663,7 +665,7 @@ Scope {
                                         Layout.fillWidth: true
                                         Text { text: "Luminosité"; font.pixelSize: 11; color: root.colText }
                                         Item { Layout.fillWidth: true }
-                                        Text { text: root.brightness + "%"; font.pixelSize: 10; color: root.colMuted }
+                                        Text { text: root.brightness + "%"; font.pixelSize: 11; color: root.colMuted }
                                     }
 
                                     Slider {
@@ -717,7 +719,7 @@ Scope {
                             Layout.preferredHeight: 88
                             visible: root.player !== null
                             color: root.colors.cElevated
-                            radius: 9
+                            radius: 6
 
                             ColumnLayout {
                                 anchors.fill: parent
@@ -754,7 +756,7 @@ Scope {
                                             required property int index
                                             text: modelData
                                             font.family: "JetBrainsMono Nerd Font"
-                                            font.pixelSize: 16
+                                            font.pixelSize: 14
                                             color: index === 1 ? root.colAccent : root.colText
                                             opacity: enabled ? 1 : 0.35
                                             enabled: index === 0 ? !!root.player?.canGoPrevious
@@ -783,9 +785,9 @@ Scope {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 40
+                                Layout.preferredHeight: 36
                                 color: root.colors.cElevated
-                                radius: 8
+                                radius: 6
                                 Text {
                                     anchors.centerIn: parent
                                     text: "\uF023"
@@ -801,9 +803,9 @@ Scope {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 40
+                                Layout.preferredHeight: 36
                                 color: root.colors.cElevated
-                                radius: 8
+                                radius: 6
                                 Text {
                                     anchors.centerIn: parent
                                     text: "\uF08B"
@@ -819,9 +821,9 @@ Scope {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 40
+                                Layout.preferredHeight: 36
                                 color: root.colors.cElevated
-                                radius: 8
+                                radius: 6
                                 Text {
                                     anchors.centerIn: parent
                                     text: "\uF01E"
@@ -837,9 +839,9 @@ Scope {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 40
+                                Layout.preferredHeight: 36
                                 color: Qt.alpha(root.colDanger, 0.12)
-                                radius: 8
+                                radius: 6
                                 Text {
                                     anchors.centerIn: parent
                                     text: "\uF011"

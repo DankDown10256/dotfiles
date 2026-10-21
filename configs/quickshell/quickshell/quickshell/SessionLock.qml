@@ -84,17 +84,17 @@ Scope {
 
                 Rectangle {
                     anchors.centerIn: parent
-                    width: Math.min(420, parent.width - 40)
-                    height: 245
-                    radius: 16
+                    width: Math.min(360, parent.width - 24)
+                    height: 216
+                    radius: 6
                     color: root.colors.cSurface
                     border.width: 1
                     border.color: root.colors.cBorder
 
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 28
-                        spacing: 14
+                        anchors.margins: 20
+                        spacing: 12
 
                         Text {
                             Layout.alignment: Qt.AlignHCenter
@@ -107,13 +107,14 @@ Scope {
                             Layout.alignment: Qt.AlignHCenter
                             text: Quickshell.env("USER") || "Session"
                             color: root.colors.cText
-                            font.pixelSize: 18
+                            font.pixelSize: 14
                             font.bold: true
                         }
                         TextField {
                             id: password
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 42
+                            Layout.preferredHeight: 36
+                            font.pixelSize: 13
                             placeholderText: "Mot de passe"
                             placeholderTextColor: root.colors.cMuted
                             echoMode: TextInput.Password
@@ -123,7 +124,7 @@ Scope {
                                 clear()
                             }
                             background: Rectangle {
-                                radius: 8
+                                radius: 6
                                 color: root.colors.cElevated
                                 border.width: 1
                                 border.color: password.activeFocus ? root.colors.cAccent : root.colors.cBorder

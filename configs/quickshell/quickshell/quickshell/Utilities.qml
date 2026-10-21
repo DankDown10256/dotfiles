@@ -113,23 +113,23 @@ Scope {
 
         Rectangle {
             width: Math.min(510, parent.width - 32)
-            height: Math.min(root.mode === "power" ? 390 : 570, parent.height - 32)
+            height: Math.min(root.mode === "power" ? 340 : 510, parent.height - 32)
             anchors.centerIn: parent
             color: root.colors.cSurface
             border.width: 1
             border.color: root.colors.cBorder
-            radius: 14
+            radius: 6
             MouseArea { anchors.fill: parent }
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 12
                 spacing: 10
 
                 RowLayout {
                     Layout.fillWidth: true
-                    Text { Layout.fillWidth: true; text: root.mode === "emoji" ? "Émojis" : root.mode === "files" ? "Fichiers" : "Alimentation"; color: root.colors.cText; font.pixelSize: 16; font.bold: true }
-                    Text { text: "Échap"; color: root.colors.cMuted; font.pixelSize: 10 }
+                    Text { Layout.fillWidth: true; text: root.mode === "emoji" ? "Émojis" : root.mode === "files" ? "Fichiers" : "Alimentation"; color: root.colors.cText; font.pixelSize: 14; font.bold: true }
+                    Text { text: "Échap"; color: root.colors.cMuted; font.pixelSize: 11 }
                 }
                 Text {
                     visible: root.mode === "files"
@@ -146,7 +146,9 @@ Scope {
                     placeholderText: root.mode === "emoji" ? "Chercher un émoji…" : "Filtrer les fichiers…"
                     placeholderTextColor: root.colors.cMuted
                     color: root.colors.cText
-                    background: Rectangle { radius: 8; color: root.colors.cElevated }
+                    font.pixelSize: 13
+                    Layout.preferredHeight: 34
+                    background: Rectangle { radius: 4; color: root.colors.cElevated }
                     onTextChanged: list.currentIndex = 0
                     onAccepted: root.activate(list.currentItem?.modelData)
                     Keys.onDownPressed: list.incrementCurrentIndex()
@@ -179,13 +181,13 @@ Scope {
                             : root.powerActions
                     delegate: Rectangle {
                         required property var modelData
-                        width: list.width; height: 43; radius: 7
+                        width: list.width; height: 40; radius: 4
                         color: ListView.isCurrentItem || rowMouse.containsMouse ? root.colors.cSelection : root.colors.cElevated
                         RowLayout {
                             anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; spacing: 12
-                            Text { text: root.mode === "emoji" ? modelData.icon : root.mode === "files" ? (modelData.directory ? "" : "") : modelData.icon; color: root.colors.cAccent; font.family: root.mode === "emoji" ? "sans-serif" : "JetBrainsMono Nerd Font"; font.pixelSize: 17 }
+                            Text { text: root.mode === "emoji" ? modelData.icon : root.mode === "files" ? (modelData.directory ? "" : "") : modelData.icon; color: root.colors.cAccent; font.family: root.mode === "emoji" ? "sans-serif" : "JetBrainsMono Nerd Font"; font.pixelSize: 14 }
                             Text { Layout.fillWidth: true; text: modelData.name; color: root.colors.cText; font.pixelSize: 12; elide: Text.ElideRight }
-                            Text { visible: root.mode === "power" && root.confirmation === modelData.key; text: "Confirmer"; color: root.colors.cWarning; font.pixelSize: 10 }
+                            Text { visible: root.mode === "power" && root.confirmation === modelData.key; text: "Confirmer"; color: root.colors.cWarning; font.pixelSize: 11 }
                         }
                         MouseArea {
                             id: rowMouse
@@ -204,7 +206,7 @@ Scope {
                 Text {
                     Layout.fillWidth: true
                     text: root.mode === "emoji" ? "Sélection : copie dans le presse-papiers" : root.mode === "files" ? "Clic : copier le chemin · clic droit : ouvrir · Retour arrière : parent" : "Redémarrer, éteindre et déconnecter demandent confirmation"
-                    color: root.colors.cMuted; font.pixelSize: 10; wrapMode: Text.WordWrap
+                    color: root.colors.cMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
                 }
             }
         }

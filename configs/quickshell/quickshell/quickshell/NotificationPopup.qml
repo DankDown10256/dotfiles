@@ -14,10 +14,10 @@ Rectangle {
     signal expired()
 
     width: 320
-    implicitHeight: mainLayout.implicitHeight + 28
+    implicitHeight: mainLayout.implicitHeight + 24
     color: root.colors.cSurface
-    radius: 9
-    border.color: Qt.alpha(root.colors.cBorder, 0.65)
+    radius: 6
+    border.color: root.colors.cBorder
     border.width: 1
     opacity: shown ? 1 : 0
 
@@ -25,17 +25,17 @@ Rectangle {
 
     Behavior on opacity {
         NumberAnimation {
-            duration: root.shown ? 200 : 160
+            duration: 120
             easing.type: Easing.OutCubic
         }
     }
 
     transform: Translate {
-        x: root.shown ? 0 : 8
+        x: root.shown ? 0 : 4
 
         Behavior on x {
             NumberAnimation {
-                duration: root.shown ? 200 : 160
+                duration: 120
                 easing.type: Easing.OutCubic
             }
         }
@@ -130,8 +130,8 @@ Rectangle {
                 delegate: Rectangle {
                     required property var modelData
                     width: Math.min(actionText.implicitWidth + 24, mainLayout.width)
-                    height: 32
-                    radius: 8
+                    height: 28
+                    radius: 6
                     color: actionMouse.containsMouse
                         ? root.colors.cSelection : root.colors.cElevated
 

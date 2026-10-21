@@ -128,12 +128,12 @@ Scope {
             Rectangle {
                 id: card
                 width: Math.min(520, parent.width - 32)
-                height: Math.min(600, parent.height - 32)
+                height: Math.min(520, parent.height - 32)
                 anchors.centerIn: parent
-                radius: 14
+                radius: 6
                 color: root.colors.cSurface
                 border.width: 1
-                border.color: Qt.alpha(root.colors.cBorder, 0.7)
+                border.color: root.colors.cBorder
                 opacity: root.open ? 1 : 0
                 scale: root.open ? 1 : 0.98
                 Behavior on opacity { NumberAnimation { duration: 150 } }
@@ -157,7 +157,7 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 18
+                    anchors.margins: 12
                     spacing: 12
 
                     RowLayout {
@@ -165,7 +165,7 @@ Scope {
                         Text {
                             text: "Presse-papiers"
                             color: root.colors.cText
-                            font.pixelSize: 16
+                            font.pixelSize: 14
                             font.bold: true
                         }
                         Item { Layout.fillWidth: true }
@@ -211,8 +211,8 @@ Scope {
                         delegate: Rectangle {
                             required property var modelData
                             width: list.width
-                            height: 48
-                            radius: 8
+                            height: 40
+                            radius: 6
                             color: ListView.isCurrentItem || rowMouse.containsMouse
                                 ? root.colors.cSelection : "transparent"
                             Text {
@@ -237,7 +237,7 @@ Scope {
                         Layout.fillWidth: true
                         text: "↑↓ parcourir · Entrée copier · Échap fermer"
                         color: root.colors.cMuted
-                        font.pixelSize: 10
+                        font.pixelSize: 11
                     }
                 }
             }

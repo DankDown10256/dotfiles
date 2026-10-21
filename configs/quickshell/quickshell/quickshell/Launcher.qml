@@ -10,7 +10,7 @@ import QtQuick.Layouts
 Scope {
     id: launcher
     required property var colors
-    property int barInset: 48
+    property int barInset: 30
  
     readonly property color cBg:      colors.cBg
     readonly property color cSurface: colors.cSurface
@@ -87,8 +87,7 @@ Scope {
         { kind: "ipc", target: "systempanels", method: "weather", name: "Météo", detail: "Conditions et prévisions", icon: "weather-clear" },
         { kind: "ipc", target: "systempanels", method: "media", name: "Multimédia", detail: "Lecteur MPRIS", icon: "media-playback-start" },
         { kind: "ipc", target: "controlcenter", method: "toggle", name: "Centre de contrôle", detail: "Wi-Fi, réseau, son, luminosité et session", icon: "preferences-system" },
-        { kind: "ipc", target: "notifications", method: "toggle", name: "Notifications", detail: "Historique et mode silencieux", icon: "notifications" },
-        { kind: "ipc", target: "themes", method: "toggle", name: "Thèmes", detail: "Changer le thème actif", icon: "preferences-desktop-theme" }
+        { kind: "ipc", target: "notifications", method: "toggle", name: "Notifications", detail: "Historique et mode silencieux", icon: "notifications" }
     ]
 
     function launchInTerminal(app) {
@@ -205,17 +204,17 @@ Scope {
 
             Rectangle {
                 id: panel
-                width: Math.min(600, parent.width - 32)
+                width: Math.min(540, parent.width - 24)
                 height: Math.min(
-                    144 + Math.min(results.length, 6) * 56,
+                    112 + Math.min(results.length, 6) * 48,
                     parent.height - 48
                 )
                 anchors.centerIn: parent
 
                 color: launcher.cSurface
-                radius: 14
+                radius: 6
                 border.width: 1
-                border.color: Qt.alpha(launcher.colors.cBorder, 0.65)
+                border.color: launcher.colors.cBorder
 
                 property bool shown: false
                 opacity: shown ? 1 : 0
@@ -228,17 +227,17 @@ Scope {
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: panel.shown ? 200 : 160
+                        duration: 120
                         easing.type: Easing.OutCubic
                     }
                 }
 
                 transform: Translate {
-                    x: panel.shown ? 0 : -24
+                    x: panel.shown ? 0 : -4
 
                     Behavior on x {
                         NumberAnimation {
-                            duration: panel.shown ? 200 : 160
+                            duration: 120
                             easing.type: Easing.OutCubic
                         }
                     }
@@ -408,7 +407,7 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 16
+                    anchors.margins: 12
                     spacing: 8
 
                     RowLayout {
@@ -439,7 +438,7 @@ Scope {
                     TextField {
                         id: search
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 42
+                        Layout.preferredHeight: 36
                         placeholderText: launcher.projectMode
                             ? launcher.pendingProject !== ""
                                 ? "Ouvrir avec quel terminal ?"
@@ -456,15 +455,15 @@ Scope {
                         selectionColor: launcher.cAccent
                         selectedTextColor: launcher.cBg
                         font.family: "sans-serif"
-                        font.pixelSize: 16
-                        leftPadding: 16
-                        rightPadding: 16
+                        font.pixelSize: 14
+                        leftPadding: 12
+                        rightPadding: 12
                         background: Rectangle {
-                            radius: 9
+                            radius: 6
                             color: launcher.colors.cElevated
                             border.width: 1
                             border.color: search.activeFocus
-                                ? Qt.alpha(launcher.cAccent, 0.3)
+                                ? launcher.cAccent
                                 : "transparent"
 
                             Behavior on border.color {
@@ -511,7 +510,7 @@ Scope {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         clip: true
-                        spacing: 6
+                        spacing: 4
                         currentIndex: 0
                         model: ScriptModel { values: panel.results }
 
@@ -523,7 +522,7 @@ Scope {
 
                             width: ListView.view.width
                             height: 44
-                            radius: 7
+                            radius: 4
                             color: ListView.isCurrentItem
                                 ? launcher.cSel
                                 : resultMouse.containsMouse
@@ -540,7 +539,7 @@ Scope {
                                 spacing: 12
 
                                 IconImage {
-                                    implicitSize: 24
+                                    implicitSize: 20
                                     source: Quickshell.iconPath(item.entry.icon, "application-x-executable")
                                 }
                                 Text {
@@ -555,17 +554,17 @@ Scope {
                                 Text {
                                     visible: launcher.unifiedMode && !!item.entry.detail
                                     text: item.entry.detail
-                                    Layout.maximumWidth: 180
+                                    Layout.maximumWidth: 140
                                     elide: Text.ElideMiddle
                                     font.family: "sans-serif"
-                                    font.pixelSize: 10
+                                    font.pixelSize: 11
                                     color: launcher.cDim
                                 }
 
                                 Text {
                                     visible: launcher.projectMode && launcher.pendingProject === ""
                                     text: item.entry.path || ""
-                                    Layout.maximumWidth: 180
+                                    Layout.maximumWidth: 140
                                     elide: Text.ElideMiddle
                                     font.family: "sans-serif"
                                     font.pixelSize: 11
@@ -587,7 +586,7 @@ Scope {
                                     visible: item.ListView.isCurrentItem
                                     text: "↵"
                                     color: launcher.cAccent
-                                    font.pixelSize: 16
+                                    font.pixelSize: 14
                                 }
                             }
 

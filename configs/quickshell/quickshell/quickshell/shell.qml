@@ -11,11 +11,12 @@ Scope {
     Notifications {
       id: notificationCenter
       colors: colors
+      barInset: desktopBar.barVisible ? 30 : 0
     }
 
     Launcher {
       colors: colors
-      barInset: desktopBar.barVisible ? 40 : 0
+      barInset: desktopBar.barVisible ? 30 : 0
     } 
 
     WorkspaceOverview {
@@ -38,6 +39,7 @@ Scope {
     SystemPanels {
       id: systemPanels
       colors: colors
+      barInset: desktopBar.barVisible ? 30 : 0
     }
 
     SessionLock { colors: colors }
@@ -50,7 +52,7 @@ Scope {
       id: controlCenter
       colors: colors
       notifications: notificationCenter
-      barInset: desktopBar.barVisible ? 32 : 0
+      barInset: desktopBar.barVisible ? 30 : 0
     }
     Bar {
       id: desktopBar
@@ -60,9 +62,6 @@ Scope {
       capture: captureMenu
       controlCenter: controlCenter
     }
-    ThemeSwitcher {
-      colors: colors
-    } 
     ScreenHotspots {
       colors: colors
       controlCenter: controlCenter

@@ -12,6 +12,7 @@ import QtQuick.Layouts
 Scope {
     id: root
     required property var colors
+    property int barInset: 30
     property bool open: false
     property string page: "audio"
     property var targetScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0]
@@ -49,19 +50,19 @@ Scope {
 
     component PanelButton: Button {
         id: control
-        implicitHeight: 34
-        font.pixelSize: 11
+        implicitHeight: 30
+        font.pixelSize: 12
         contentItem: Text {
             text: control.text
             color: control.enabled ? root.colors.cText : root.colors.cMuted
-            font.pixelSize: 11
+            font.pixelSize: 12
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
         }
         background: Rectangle {
-            radius: 7
-            color: control.hovered ? root.colors.cSelection : root.colors.cElevated
+            radius: 4
+            color: control.hovered || control.activeFocus ? root.colors.cSelection : root.colors.cElevated
             border.width: 1
             border.color: root.colors.cBorder
             opacity: control.enabled ? 1 : 0.5
@@ -276,10 +277,10 @@ Scope {
         screen: root.targetScreen
         visible: root.open
         anchors { top: true; right: true }
-        margins { top: 34; right: root.popupRight }
-        implicitWidth: Math.min(root.page === "calendar" ? 390 : 430, screen.width - 20)
-        implicitHeight: Math.min(screen.height - 60,
-            Math.max(190, content.implicitHeight + headerRow.implicitHeight + tabFlow.implicitHeight + 48))
+        margins { top: root.barInset + 8; right: root.popupRight }
+        implicitWidth: Math.min(root.page === "calendar" ? 360 : 400, screen.width - 20)
+        implicitHeight: Math.min(screen.height - root.barInset - 20,
+            Math.max(190, content.implicitHeight + headerRow.implicitHeight + tabFlow.implicitHeight + 44))
         exclusiveZone: 0
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
@@ -288,7 +289,7 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            radius: 13
+            radius: 6
             color: root.colors.cSurface
             border.width: 1
             border.color: root.colors.cBorder
@@ -297,7 +298,7 @@ Scope {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 14
+                anchors.margins: 12
                 spacing: 10
                 RowLayout {
                     id: headerRow
@@ -305,7 +306,7 @@ Scope {
                     Text {
                         Layout.fillWidth: true
                         text: ({audio:"Audio",network:"Réseau",bluetooth:"Bluetooth",battery:"Batterie",brightness:"Luminosité",calendar:"Calendrier",weather:"Météo",media:"Multimédia"})[root.page]
-                        color: root.colors.cText; font.pixelSize: 16; font.bold: true
+                        color: root.colors.cText; font.pixelSize: 14; font.bold: true
                     }
                     Text {
                         text: "✕"; color: root.colors.cMuted; font.pixelSize: 14
@@ -324,9 +325,9 @@ Scope {
                         ]
                         delegate: Rectangle {
                             required property var modelData
-                            width: tabText.implicitWidth + 18; height: 28; radius: 6
+                            width: tabText.implicitWidth + 16; height: 28; radius: 4
                             color: root.page === modelData.id ? root.colors.cSelection : root.colors.cElevated
-                            Text { id: tabText; anchors.centerIn: parent; text: modelData.label; color: root.page === modelData.id ? root.colors.cAccent : root.colors.cMuted; font.pixelSize: 10 }
+                            Text { id: tabText; anchors.centerIn: parent; text: modelData.label; color: root.page === modelData.id ? root.colors.cAccent : root.colors.cMuted; font.pixelSize: 11 }
                             MouseArea { anchors.fill: parent; onClicked: root.showPanel(modelData.id, root.targetScreen) }
                         }
                     }
@@ -393,7 +394,7 @@ Scope {
                                     }
                                 }
                             }
-                            TextField { id: wifiPassword; visible: root.pendingSsid !== ""; Layout.fillWidth: true; placeholderText: "Mot de passe · " + root.pendingSsid; placeholderTextColor: root.colors.cMuted; color: root.colors.cText; echoMode: TextInput.Password; onAccepted: root.connectWifi(); background: Rectangle { radius: 7; color: root.colors.cElevated } }
+                            TextField { id: wifiPassword; visible: root.pendingSsid !== ""; Layout.fillWidth: true; placeholderText: "Mot de passe · " + root.pendingSsid; placeholderTextColor: root.colors.cMuted; color: root.colors.cText; echoMode: TextInput.Password; onAccepted: root.connectWifi(); background: Rectangle { radius: 4; color: root.colors.cElevated } }
                             PanelButton { visible: root.pendingSsid !== ""; text: "Connecter"; onClicked: root.connectWifi() }
                             PanelButton { text: "Rechercher les réseaux"; onClicked: { root.run(["nmcli","device","wifi","rescan"]); refreshDelay.restart() } }
                         }
@@ -421,7 +422,7 @@ Scope {
 
                         ColumnLayout {
                             visible: root.page === "battery"; Layout.fillWidth: true; spacing: 10
-                            Text { text: root.battery?.isPresent ? Math.round(root.battery.percentage * 100) + "%" : root.batteryPresent ? root.batteryPercent + "%" : "Batterie indisponible"; color: root.colors.cText; font.pixelSize: 32; font.bold: true }
+                            Text { text: root.battery?.isPresent ? Math.round(root.battery.percentage * 100) + "%" : root.batteryPresent ? root.batteryPercent + "%" : "Batterie indisponible"; color: root.colors.cText; font.pixelSize: 24; font.bold: true }
                             Text { visible: root.battery?.isPresent || root.batteryPresent; text: (root.battery?.isPresent ? (UPower.onBattery ? "Sur batterie · " : "Sur secteur · ") : root.batteryCharging ? "En charge · " : "Sur batterie · ") + root.duration(root.battery?.isPresent ? (UPower.onBattery ? root.battery.timeToEmpty : root.battery.timeToFull) : root.batteryTime); color: root.colors.cMuted; font.pixelSize: 12 }
                             Text { text: "Profil énergétique"; color: root.colors.cText; font.pixelSize: 12 }
                             Text { visible: !root.profileAvailable; text: "Service de profils énergétiques indisponible"; color: root.colors.cMuted; font.pixelSize: 11 }
@@ -472,7 +473,7 @@ Scope {
 
                         ColumnLayout {
                             visible: root.page === "weather"; Layout.fillWidth: true; spacing: 9
-                            Text { text: root.weatherCity; color: root.colors.cText; font.pixelSize: 16; font.bold: true }
+                            Text { text: root.weatherCity; color: root.colors.cText; font.pixelSize: 14; font.bold: true }
                             TextField {
                                 Layout.fillWidth: true
                                 text: root.weatherCity
@@ -487,9 +488,9 @@ Scope {
                                     settingsFile.writeAdapter()
                                     weatherRead.running = true
                                 }
-                                background: Rectangle { radius: 7; color: root.colors.cElevated }
+                                background: Rectangle { radius: 4; color: root.colors.cElevated }
                             }
-                            Text { text: root.weather?.current_condition?.[0] ? root.weather.current_condition[0].temp_C + " °C" : root.weatherError || "Chargement…"; color: root.colors.cAccent; font.pixelSize: 30 }
+                            Text { text: root.weather?.current_condition?.[0] ? root.weather.current_condition[0].temp_C + " °C" : root.weatherError || "Chargement…"; color: root.colors.cAccent; font.pixelSize: 24 }
                             Text { text: root.weather?.current_condition?.[0]?.lang_fr?.[0]?.value || root.weather?.current_condition?.[0]?.weatherDesc?.[0]?.value || ""; color: root.colors.cMuted; font.pixelSize: 12 }
                             Repeater {
                                 model: root.weather?.weather || []
@@ -505,7 +506,7 @@ Scope {
 
                         ColumnLayout {
                             visible: root.page === "media"; Layout.fillWidth: true; spacing: 10
-                            Image { Layout.alignment: Qt.AlignHCenter; Layout.preferredWidth: 170; Layout.preferredHeight: 170; source: root.player?.trackArtUrl || ""; fillMode: Image.PreserveAspectCrop; visible: source !== "" }
+                            Image { Layout.alignment: Qt.AlignHCenter; Layout.preferredWidth: 128; Layout.preferredHeight: 128; source: root.player?.trackArtUrl || ""; fillMode: Image.PreserveAspectCrop; visible: source !== "" }
                             Text { Layout.fillWidth: true; text: root.player?.trackTitle || "Aucune lecture"; color: root.colors.cText; font.pixelSize: 15; font.bold: true; elide: Text.ElideRight }
                             Text { Layout.fillWidth: true; text: root.player?.trackArtist || ""; color: root.colors.cMuted; font.pixelSize: 12; elide: Text.ElideRight }
                             RowLayout {

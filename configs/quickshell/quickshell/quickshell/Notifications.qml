@@ -11,6 +11,7 @@ Scope {
     id: root
 
     required property var colors
+    property int barInset: 30
     property bool dnd: false
     property bool open: false
     property bool alive: false
@@ -108,9 +109,9 @@ Scope {
     PanelWindow {
         screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0]
         anchors { top: true; right: true }
-        margins { top: 16; right: 16 }
+        margins { top: root.barInset + 8; right: 12 }
         implicitWidth: Math.min(340, screen.width - 32)
-        implicitHeight: Math.min(popupColumn.implicitHeight, screen.height - 32)
+        implicitHeight: Math.min(popupColumn.implicitHeight, screen.height - root.barInset - 20)
         visible: root.popups.length > 0 && !root.alive
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
@@ -165,17 +166,18 @@ Scope {
                 id: card
                 anchors.top: parent.top
                 anchors.right: parent.right
-                anchors.margins: 14
+                anchors.topMargin: root.barInset + 8
+                anchors.rightMargin: 12
                 width: Math.min(372, parent.width - 32)
                 height: Math.min(
-                    parent.height - 32,
+                    parent.height - root.barInset - 20,
                     root.history.length === 0 ? 160
                         : Math.min(560, historyList.contentHeight + 80)
                 )
-                radius: 14
+                radius: 6
                 color: root.colors.cSurface
                 border.width: 1
-                border.color: Qt.alpha(root.colors.cBorder, 0.65)
+                border.color: root.colors.cBorder
                 property bool shown: false
                 opacity: shown ? 1 : 0
                 focus: true
@@ -194,17 +196,17 @@ Scope {
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: card.shown ? 200 : 160
+                        duration: 120
                         easing.type: Easing.OutCubic
                     }
                 }
 
                 transform: Translate {
-                    x: card.shown ? 0 : 8
+                    x: card.shown ? 0 : 4
 
                     Behavior on x {
                         NumberAnimation {
-                            duration: card.shown ? 200 : 160
+                            duration: 120
                             easing.type: Easing.OutCubic
                         }
                     }
@@ -214,7 +216,7 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 14
+                    anchors.margins: 12
                     spacing: 12
 
                     RowLayout {
@@ -231,15 +233,15 @@ Scope {
                         }
 
                         Button {
-                            implicitHeight: 32
+                            implicitHeight: 28
                             text: root.dnd ? "DND actif" : "DND"
                             onClicked: root.dnd = !root.dnd
-                            contentItem: Text { text: parent.text; color: root.dnd ? root.colors.cAccent : root.colors.cText; font.pixelSize: 10; verticalAlignment: Text.AlignVCenter; horizontalAlignment: Text.AlignHCenter }
-                            background: Rectangle { radius: 8; color: root.dnd ? root.colors.cSelection : root.colors.cElevated }
+                            contentItem: Text { text: parent.text; color: root.dnd ? root.colors.cAccent : root.colors.cText; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; horizontalAlignment: Text.AlignHCenter }
+                            background: Rectangle { radius: 6; color: root.dnd ? root.colors.cSelection : root.colors.cElevated }
                         }
 
                         Button {
-                            implicitHeight: 32
+                            implicitHeight: 28
                             implicitWidth: 80
                             text: "Tout effacer"
                             enabled: root.history.length > 0
@@ -256,7 +258,7 @@ Scope {
                             }
 
                             background: Rectangle {
-                                radius: 8
+                                radius: 6
                                 color: parent.hovered || parent.activeFocus
                                     ? root.colors.cSelection : root.colors.cElevated
 
