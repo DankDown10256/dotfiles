@@ -120,7 +120,7 @@ Scope {
         anchors { top: true; left: true }
         margins { top: (root.barVisible ? 30 : 0) + 8; left: 12 }
         implicitWidth: 280
-        implicitHeight: 56
+        implicitHeight: 46
         exclusiveZone: 0
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
@@ -395,7 +395,7 @@ Scope {
             visible: root.barVisible && !fullscreenWindow
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: 30
+            implicitHeight: 25
             exclusiveZone: visible ? implicitHeight : 0
             color: "transparent"
 
