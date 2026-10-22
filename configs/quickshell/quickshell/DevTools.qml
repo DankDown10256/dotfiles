@@ -196,12 +196,12 @@ Scope {
             Rectangle {
                 id: card
                 width: Math.min(900, parent.width - 32)
-                height: Math.min(620, parent.height - 32)
+                height: Math.min(560, parent.height - 32)
                 anchors.centerIn: parent
-                radius: 14
+                radius: 6
                 color: root.colors.cSurface
                 border.width: 1
-                border.color: Qt.alpha(root.colors.cBorder, 0.7)
+                border.color: root.colors.cBorder
                 opacity: root.open ? 1 : 0
                 scale: root.open ? 1 : 0.98
                 Behavior on opacity { NumberAnimation { duration: 150 } }
@@ -212,12 +212,12 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 18
+                    anchors.margins: 12
                     spacing: 12
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Espace développeur"; color: root.colors.cText; font.pixelSize: 17; font.bold: true }
+                        Text { text: "Espace développeur"; color: root.colors.cText; font.pixelSize: 14; font.bold: true }
                         Item { Layout.fillWidth: true }
                         Text { text: "Git · terminaux · services locaux"; color: root.colors.cMuted; font.pixelSize: 11 }
                     }
@@ -231,7 +231,7 @@ Scope {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.preferredWidth: 5
-                            radius: 10
+                            radius: 6
                             color: root.colors.cElevated
 
                             ColumnLayout {
@@ -258,17 +258,17 @@ Scope {
                                         required property var modelData
                                         required property int index
                                         width: projectList.width
-                                        height: 56
-                                        radius: 7
+                                        height: 48
+                                        radius: 4
                                         color: root.selectedPath === modelData.path
                                             ? root.colors.cSelection : projectMouse.containsMouse
-                                                ? Qt.alpha(root.colors.cSelection, 0.45) : "transparent"
+                                                ? root.colors.cSurface : "transparent"
                                         ColumnLayout {
                                             anchors.fill: parent
                                             anchors.margins: 8
                                             spacing: 2
                                             Text { text: modelData.name; color: root.colors.cText; font.pixelSize: 12; font.bold: true }
-                                            Text { Layout.fillWidth: true; text: modelData.path; color: root.colors.cMuted; font.pixelSize: 9; elide: Text.ElideMiddle }
+                                            Text { Layout.fillWidth: true; text: modelData.path; color: root.colors.cMuted; font.pixelSize: 11; elide: Text.ElideMiddle }
                                         }
                                         MouseArea {
                                             id: projectMouse
@@ -283,24 +283,24 @@ Scope {
                                     spacing: 6
                                     Rectangle {
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: 34
-                                        radius: 7
+                                        Layout.preferredHeight: 30
+                                        radius: 4
                                         color: editorMouse.containsMouse ? root.colors.cSelection : root.colors.cSurface
                                         Text { anchors.centerIn: parent; text: "Éditeur"; color: root.colors.cText; font.pixelSize: 11 }
                                         MouseArea { id: editorMouse; anchors.fill: parent; hoverEnabled: true; enabled: root.selectedPath !== "" && root.availableTools.some(tool => root.editors.includes(tool)); onClicked: root.openEditor(root.selectedPath) }
                                     }
                                     Rectangle {
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: 34
-                                        radius: 7
+                                        Layout.preferredHeight: 30
+                                        radius: 4
                                         color: terminalMouse.containsMouse ? root.colors.cSelection : root.colors.cSurface
                                         Text { anchors.centerIn: parent; text: "Terminal"; color: root.colors.cText; font.pixelSize: 11 }
                                         MouseArea { id: terminalMouse; anchors.fill: parent; hoverEnabled: true; enabled: root.selectedPath !== "" && root.availableTools.some(tool => root.terminals.includes(tool)); onClicked: root.openTerminal(root.selectedPath) }
                                     }
                                     Rectangle {
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: 34
-                                        radius: 7
+                                        Layout.preferredHeight: 30
+                                        radius: 4
                                         color: workspaceMouse.containsMouse ? root.colors.cSelection : root.colors.cSurface
                                         Text { anchors.centerIn: parent; text: "Projet"; color: root.colors.cText; font.pixelSize: 11 }
                                         MouseArea { id: workspaceMouse; anchors.fill: parent; hoverEnabled: true; enabled: root.selectedPath !== ""; onClicked: root.openWorkspace(root.selectedPath) }
@@ -310,7 +310,7 @@ Scope {
                                     Layout.fillWidth: true
                                     text: root.selectedPath === "" ? "Sélectionne un dépôt" : root.gitSummary
                                     color: root.colors.cMuted
-                                    font.pixelSize: 10
+                                    font.pixelSize: 11
                                     elide: Text.ElideRight
                                 }
                             }
@@ -325,7 +325,7 @@ Scope {
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                radius: 10
+                                radius: 6
                                 color: root.colors.cElevated
                                 ColumnLayout {
                                     anchors.fill: parent
@@ -335,7 +335,7 @@ Scope {
                                         Layout.fillWidth: true
                                         Text { text: "Ports en écoute"; color: root.colors.cText; font.pixelSize: 12; font.bold: true }
                                         Item { Layout.fillWidth: true }
-                                        Text { text: root.availableTools.includes("ss") ? "ss" : "indisponible"; color: root.availableTools.includes("ss") ? root.colors.cMuted : root.colors.cWarning; font.pixelSize: 10 }
+                                        Text { text: root.availableTools.includes("ss") ? "ss" : "indisponible"; color: root.availableTools.includes("ss") ? root.colors.cMuted : root.colors.cWarning; font.pixelSize: 11 }
                                     }
                                     Text {
                                         Layout.fillWidth: true
@@ -343,7 +343,7 @@ Scope {
                                         text: root.portSummary || "Aucun port TCP en écoute."
                                         color: root.colors.cMuted
                                         font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 11
                                         wrapMode: Text.Wrap
                                         verticalAlignment: Text.AlignTop
                                     }
@@ -353,7 +353,7 @@ Scope {
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                radius: 10
+                                radius: 6
                                 color: root.colors.cElevated
                                 ColumnLayout {
                                     anchors.fill: parent
@@ -370,7 +370,7 @@ Scope {
                                             ? "Podman\n" + (root.podmanSummary || "Aucun conteneur actif.")
                                             : "Podman indisponible")
                                         color: root.colors.cMuted
-                                        font.pixelSize: 10
+                                        font.pixelSize: 11
                                         wrapMode: Text.Wrap
                                         verticalAlignment: Text.AlignTop
                                     }
@@ -379,7 +379,7 @@ Scope {
                         }
                     }
 
-                    Text { Layout.fillWidth: true; text: "Échap pour fermer"; color: root.colors.cMuted; font.pixelSize: 10 }
+                    Text { Layout.fillWidth: true; text: "Échap pour fermer"; color: root.colors.cMuted; font.pixelSize: 11 }
                 }
             }
         }

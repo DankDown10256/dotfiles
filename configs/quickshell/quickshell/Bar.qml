@@ -118,9 +118,9 @@ Scope {
     PanelWindow {
         screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0]
         anchors { top: true; left: true }
-        margins { top: (root.barVisible ? 32 : 0) + 10; left: 12 }
+        margins { top: (root.barVisible ? 30 : 0) + 8; left: 12 }
         implicitWidth: 280
-        implicitHeight: 64
+        implicitHeight: 46
         exclusiveZone: 0
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
@@ -132,22 +132,22 @@ Scope {
         Rectangle {
             id: osdCard
             anchors.fill: parent
-            radius: 12
+            radius: 6
             color: root.colors.cSurface
             border.width: 1
-            border.color: Qt.alpha(root.colors.cBorder, 0.65)
+            border.color: root.colors.cBorder
             opacity: root.osdOpen ? 1 : 0
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: root.osdOpen ? 200 : 140
+                    duration: 120
                     easing.type: Easing.OutCubic
                 }
             }
 
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 12
                 spacing: 12
 
                 Text {
@@ -156,7 +156,7 @@ Scope {
                         : root.osdKind === "brightness" ? "\uf185"
                         : root.osdMuted ? "\uf6a9" : "\uf028"
                     font.family: root.font
-                    font.pixelSize: 16
+                    font.pixelSize: 14
                     color: root.osdMuted ? root.dim : root.accent
                 }
 
@@ -395,7 +395,7 @@ Scope {
             visible: root.barVisible && !fullscreenWindow
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: 32
+            implicitHeight: 25
             exclusiveZone: visible ? implicitHeight : 0
             color: "transparent"
 
@@ -403,7 +403,7 @@ Scope {
                 anchors.fill: parent
                 color: root.bg
                 border.width: 1
-                border.color: Qt.alpha(root.colors.cBorder, 0.6)
+                border.color: root.colors.cBorder
 
                 RowLayout {
                     anchors.fill: parent
@@ -412,7 +412,7 @@ Scope {
                     spacing: 6
 
                     Rectangle {
-                        implicitWidth: 30; implicitHeight: 26; radius: 6
+                        implicitWidth: 26; implicitHeight: 24; radius: 4
                         color: launchMouse.containsMouse ? root.colors.cSelection : "transparent"
                         Text { anchors.centerIn: parent; text: "\uf0c9"; color: root.accent; font.family: root.font; font.pixelSize: 13 }
                         MouseArea { id: launchMouse; anchors.fill: parent; hoverEnabled: true; onClicked: Quickshell.execDetached(["qs", "ipc", "call", "launcher", "toggle"]) }
@@ -425,9 +425,9 @@ Scope {
                             readonly property int wsId: index + 1
                             readonly property bool focused: Hyprland.monitors.values.some(m => m.name === bar.screen.name && m.activeWorkspace?.id === wsId)
                             readonly property bool occupied: Hyprland.toplevels.values.some(w => w.workspace?.id === wsId)
-                            implicitWidth: 28
-                            implicitHeight: 25
-                            radius: 6
+                            implicitWidth: 24
+                            implicitHeight: 24
+                            radius: 4
                             color: focused ? root.colors.cSelection : wsMouse.containsMouse ? root.colors.cElevated : "transparent"
                             Text {
                                 anchors.centerIn: parent
@@ -452,7 +452,7 @@ Scope {
                         }
                     }
 
-                    Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: root.colors.cBorder }
+                    Rectangle { Layout.alignment: Qt.AlignVCenter; implicitWidth: 1; implicitHeight: 14; color: root.colors.cBorder }
 
                     Text {
                         Layout.fillWidth: true
@@ -466,24 +466,10 @@ Scope {
                         elide: Text.ElideRight
                     }
 
+                    Item { Layout.fillWidth: true }
+
                     RowLayout {
                         spacing: 7
-                        Text {
-                            visible: bar.width > 1150
-                            text: root.panels.weather?.current_condition?.[0] ? root.panels.weather.current_condition[0].temp_C + "°" : "--°"
-                            color: root.dim; font.family: root.font; font.pixelSize: 10
-                            MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("weather", bar.screen, mapToItem(null, width, 0).x) }
-                        }
-                        Text {
-                            visible: bar.width > 1250 && root.keyboardLayout !== ""
-                            text: root.keyboardLayout.slice(0, 2).toUpperCase()
-                            color: root.dim; font.family: root.font; font.pixelSize: 10
-                        }
-                        Text {
-                            visible: root.updateCount > 0 && bar.width > 1350
-                            text: " " + root.updateCount
-                            color: root.warn; font.family: root.font; font.pixelSize: 10
-                        }
                         Text {
                             visible: root.notifications.dnd
                             text: ""; color: root.warn; font.family: root.font; font.pixelSize: 12
@@ -496,7 +482,7 @@ Scope {
                         }
                         Text {
                             visible: root.capture.recording
-                            text: "● REC"; color: root.colors.cDanger; font.family: root.font; font.pixelSize: 10
+                            text: "● REC"; color: root.colors.cDanger; font.family: root.font; font.pixelSize: 11
                             MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached(["qs", "ipc", "call", "capture", "toggle"]) }
                         }
                         Text {
@@ -528,7 +514,7 @@ Scope {
                         }
                     }
 
-                    Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: root.colors.cBorder }
+                    Rectangle { Layout.alignment: Qt.AlignVCenter; implicitWidth: 1; implicitHeight: 14; color: root.colors.cBorder }
 
                     Text {
                         text: root.ethernetUp ? "\uf6ff" : "\uf1eb"
@@ -536,12 +522,6 @@ Scope {
                         font.pixelSize: 13
                         color: root.ethernetUp || root.wifiUp ? root.fg : root.dim
                         MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("network", bar.screen, mapToItem(null, width, 0).x) }
-                    }
-
-                    Text {
-                        text: "\uf293"; font.family: root.font; font.pixelSize: 13
-                        color: root.panels.bluetoothEnabled ? root.fg : root.dim
-                        MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("bluetooth", bar.screen, mapToItem(null, width, 0).x) }
                     }
 
                     Text {
@@ -560,72 +540,25 @@ Scope {
                     }
 
                     Text {
+                        visible: !!root.microphone?.audio && root.microphone.audio.muted
                         text: !root.microphone?.audio || root.microphone.audio.muted ? "\uf131" : "\uf130"
                         font.family: root.font; font.pixelSize: 13
                         color: !root.microphone?.audio ? root.dim : root.microphone.audio.muted ? root.warn : root.fg
                         MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("audio", bar.screen, mapToItem(null, width, 0).x) }
                     }
 
-                    Text {
-                        text: "\uf185"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        color: root.fg
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: root.panels.showPanel("brightness", bar.screen, mapToItem(null, width, 0).x)
-                            onWheel: wheel => {
-                                if (!root.panels.brightnessAvailable) return
-                                Quickshell.execDetached(["brightnessctl", "set", wheel.angleDelta.y > 0 ? "5%+" : "5%-"])
-                                briProc.running = true
-                            }
-                        }
-                    }
-
                     RowLayout {
                         visible: root.batPresent || root.panels.battery?.isPresent || root.panels.batteryPresent
                         spacing: 4
                         Ico { text: root.batIcon(); color: (root.panels.batteryPresent ? root.panels.batteryPercent : root.batPercent) <= 15 && !root.batCharging ? root.warn : root.batCharging ? root.accent : root.fg }
-                        Text { text: (root.panels.battery?.isPresent ? Math.round(root.panels.battery.percentage * 100) : root.panels.batteryPresent ? root.panels.batteryPercent : root.batPercent) + "%"; color: root.fg; font.family: root.font; font.pixelSize: 10 }
+                        Text { text: (root.panels.battery?.isPresent ? Math.round(root.panels.battery.percentage * 100) : root.panels.batteryPresent ? root.panels.batteryPercent : root.batPercent) + "%"; color: root.fg; font.family: root.font; font.pixelSize: 11 }
                         MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("battery", bar.screen, mapToItem(null, width, 0).x) }
-                    }
-
-                    Text {
-                        text: PowerProfiles.profile === PowerProfile.PowerSaver ? "" : PowerProfiles.profile === PowerProfile.Performance ? "" : ""
-                        color: root.dim; font.family: root.font; font.pixelSize: 12
-                        MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("battery", bar.screen, mapToItem(null, width, 0).x) }
-                    }
-
-                    Text {
-                        visible: root.player !== null && bar.width > 1350
-                        text: "♫ " + (root.player?.trackTitle || "")
-                        width: Math.min(105, implicitWidth)
-                        elide: Text.ElideRight
-                        color: root.dim; font.pixelSize: 10
-                        MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("media", bar.screen, mapToItem(null, width, 0).x) }
-                    }
-
-                    Text {
-                        text: ""
-                        color: root.fg
-                        font.family: root.font
-                        font.pixelSize: 11
-                        MouseArea { anchors.fill: parent; onClicked: root.caffeine = !root.caffeine }
                     }
 
                     Rectangle {
                         implicitWidth: 28
-                        implicitHeight: 26
-                        radius: 6
-                        color: actionMouse.containsMouse ? root.colors.cSelection : "transparent"
-                        Text { anchors.centerIn: parent; text: "\uf002"; color: root.dim; font.family: root.font; font.pixelSize: 12 }
-                        MouseArea { id: actionMouse; anchors.fill: parent; hoverEnabled: true; onClicked: Quickshell.execDetached(["qs", "ipc", "call", "launcher", "actions"]) }
-                    }
-
-                    Rectangle {
-                        implicitWidth: 28
-                        implicitHeight: 26
-                        radius: 6
+                        implicitHeight: 24
+                        radius: 4
                         color: controlMouse.containsMouse ? root.colors.cSelection : "transparent"
                         Text { anchors.centerIn: parent; text: "\uf1de"; color: root.dim; font.family: root.font; font.pixelSize: 12 }
                         MouseArea { id: controlMouse; anchors.fill: parent; hoverEnabled: true; onClicked: root.controlCenter.toggleOn(bar.screen) }
@@ -635,8 +568,8 @@ Scope {
                 Rectangle {
                     anchors.centerIn: parent
                     width: centeredClock.implicitWidth + 12
-                    height: 26
-                    radius: 5
+                    height: 24
+                    radius: 4
                     color: root.bg
                     z: 1
 
@@ -648,7 +581,7 @@ Scope {
                             : Qt.formatDateTime(clock.date, "ddd d · HH:mm")
                         color: root.fg
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: 12
                     }
 
                     MouseArea {

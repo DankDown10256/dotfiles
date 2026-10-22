@@ -1,42 +1,65 @@
+
 #!/bin/sh
 
+set -eu
+
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+DEST="./configs"
+
 INFO() {
-  echo "[INFO] $1"
+    printf '[INFO] %s\n' "$1"
 }
 
-rofi=/home/$USER/.config/rofi/
-hypr=/home/$USER/.config/hypr/
-swaync=/home/$USER/.config/swaync/
-waybar=/home/$USER/.config/waybar/
-foot=/home/$USER/.config/foot/
-fish=/home/$USER/.config/fish/
-quickshell=/home/$USER/.config/quickshell/ 
-tmux=/home/$USER/.tmux.conf
+ERROR() {
+    printf '[ERROR] %s\n' "$1" >&2
+}
 
-echo "Update configurations"
+copy_dir() {
+    name="$1"
+    source="$2"
 
-cp -r "$rofi" ./configs/rofi/
-INFO "Rofi copied"
+    if [ ! -d "$source" ]; then
+        ERROR "$name: directory not found ($source)"
+        return 1
+    fi
 
-cp -r "$hypr" ./configs/hypr/
-INFO "Hypr copied"
+    mkdir -p "$DEST/$name"
 
-cp -r "$swaync" ./configs/swaync/
-INFO "swaync copied"
+    rsync -a --delete \
+        --exclude='.git/' \
+        "$source/" "$DEST/$name/"
 
-cp -r "$waybar" ./configs/waybar/
-INFO "Waybar copied"
+    INFO "$name copied"
+}
 
-cp -r "$foot" ./configs/foot/
-INFO "Foot copied"
+copy_file() {
+    name="$1"
+    source="$2"
 
-cp -r "$fish" ./configs/fish/
-INFO "Fish copied"
+    if [ ! -f "$source" ]; then
+        ERROR "$name: file not found ($source)"
+        return 1
+    fi
 
-cp -r "$quickshell" ./configs/quickshell/
-INFO "Quickshell copied"
+    mkdir -p "$DEST/$name"
+    cp "$source" "$DEST/$name/"
 
-cp "$tmux" ./configs/tmux/
-INFO "Tmux copied"
+    INFO "$name copied"
+}
 
-echo "Update finished"
+INFO "Updating configurations..."
+
+copy_dir "rofi"       "$CONFIG_HOME/rofi"
+copy_dir "hypr"       "$CONFIG_HOME/hypr"
+copy_dir "swaync"     "$CONFIG_HOME/swaync"
+copy_dir "waybar"     "$CONFIG_HOME/waybar"
+copy_dir "foot"       "$CONFIG_HOME/foot"
+copy_dir "fish"       "$CONFIG_HOME/fish"
+copy_dir "quickshell" "$CONFIG_HOME/quickshell"
+copy_dir "i3"         "$CONFIG_HOME/i3"
+copy_dir "picom"      "$CONFIG_HOME/picom"
+
+copy_file "tmux"      "$HOME/.tmux.conf"
+copy_file "xinitrc"   "$HOME/.xinitrc"
+
+INFO "Update finished"

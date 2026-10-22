@@ -1,4 +1,3 @@
-set fish_greeting
 alias l="ls -al"
-if status is-interactive	
-end
+alias vim="nvim"
+set -g fish_greeting

@@ -114,12 +114,12 @@ Scope {
             Rectangle {
                 id: card
                 width: Math.min(440, parent.width - 32)
-                height: Math.min(340, parent.height - 32)
+                height: Math.min(292, parent.height - 32)
                 anchors.centerIn: parent
-                radius: 14
+                radius: 6
                 color: root.colors.cSurface
                 border.width: 1
-                border.color: Qt.alpha(root.colors.cBorder, 0.7)
+                border.color: root.colors.cBorder
                 opacity: root.open ? 1 : 0
                 scale: root.open ? 1 : 0.98
                 Behavior on opacity { NumberAnimation { duration: 150 } }
@@ -130,13 +130,13 @@ Scope {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 18
+                    anchors.margins: 12
                     spacing: 10
 
                     Text {
                         text: "Capture"
                         color: root.colors.cText
-                        font.pixelSize: 16
+                        font.pixelSize: 14
                         font.bold: true
                     }
 
@@ -152,8 +152,8 @@ Scope {
                             required property var modelData
                             required property int index
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 62
-                            radius: 8
+                            Layout.preferredHeight: 52
+                            radius: 6
                             color: captureMouse.containsMouse
                                 ? root.colors.cSelection : root.colors.cElevated
                             opacity: modelData.enabled ? 1 : 0.55
@@ -163,7 +163,7 @@ Scope {
                                 anchors.rightMargin: 12
                                 spacing: 3
                                 Text { text: modelData.title; color: root.colors.cText; font.pixelSize: 12; font.bold: true }
-                                Text { text: modelData.detail; color: root.colors.cMuted; font.pixelSize: 10 }
+                                Text { text: modelData.detail; color: root.colors.cMuted; font.pixelSize: 11 }
                             }
                             MouseArea {
                                 id: captureMouse

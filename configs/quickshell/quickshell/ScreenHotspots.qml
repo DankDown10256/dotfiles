@@ -28,7 +28,7 @@ Scope {
                 screen: modelData
                 visible: !fullscreenWindow
                 anchors.top: true
-                margins.top: root.barVisible && !fullscreenWindow ? 36 : 0
+                margins.top: root.barVisible && !fullscreenWindow ? 34 : 0
                 implicitWidth: 240
                 implicitHeight: 4
                 color: "transparent"

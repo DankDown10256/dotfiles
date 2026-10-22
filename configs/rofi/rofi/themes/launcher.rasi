@@ -1,6 +1,0 @@
-@import "../shared.rasi"
-
-window { width: 36%; }
-listview { columns: 1; lines: 7; }
-element { padding: 9px 10px; }
-element-icon { size: 24px; }

@@ -1,6 +1,6 @@
 {
   "layer": "top",
-  "position": "top",
+  "position": "bottom",
   "height": 32,
   "margin-top": 0,
   "margin-right": 0,
@@ -39,7 +39,8 @@
     "format-disconnected": "󰤭",
     "tooltip-format-wifi": "{essid}  {signalStrength}%",
     "tooltip-format-ethernet": "{ifname}",
-    "tooltip-format-disconnected": "Network disconnected"
+    "tooltip-format-disconnected": "Network disconnected",
+    "on-click": "foot nmtui"
   },
 
   "pulseaudio": {
@@ -56,7 +57,8 @@
   "memory": {
     "format": "󰍛  {used:0.1f}G",
     "tooltip-format": "Memory  {used:0.1f} GiB / {total:0.1f} GiB",
-    "interval": 5
+    "interval": 5,
+    "on-click": "foot btop"
   },
 
   "battery": {

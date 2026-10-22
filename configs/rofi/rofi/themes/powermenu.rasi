@@ -1,9 +1,0 @@
-@import "../shared.rasi"
-
-configuration { show-icons: false; }
-window { width: 430px; }
-mainbox { padding: 16px; }
-inputbar, message { enabled: false; }
-listview { columns: 3; lines: 2; spacing: 8px; fixed-columns: true; }
-element { padding: 14px 10px; }
-element-text { horizontal-align: 0.5; }

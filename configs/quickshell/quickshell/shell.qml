@@ -1,59 +1,60 @@
 import Quickshell
-import "quickshell" as Desktop
+import "."
 
 Scope {
     id: root
 
-    Desktop.Colors {
+    Colors {
       id: colors
     }
 
-    Desktop.Notifications {
+    Notifications {
       id: notificationCenter
       colors: colors
       barInset: desktopBar.barVisible ? 30 : 0
     }
 
-    Desktop.Launcher {
+    Launcher {
       colors: colors
       barInset: desktopBar.barVisible ? 30 : 0
     } 
 
-    Desktop.WorkspaceOverview {
+    WorkspaceOverview {
       colors: colors
     }
 
-    Desktop.DevTools {
+    DevTools {
       colors: colors
     }
 
-    Desktop.ClipboardHistory {
+    ClipboardHistory {
       colors: colors
     }
 
-    Desktop.CaptureMenu {
+    CaptureMenu {
       id: captureMenu
       colors: colors
     }
 
-    Desktop.SystemPanels {
+    SystemPanels {
       id: systemPanels
       colors: colors
       barInset: desktopBar.barVisible ? 30 : 0
     }
 
-    Desktop.SessionLock { colors: colors }
+    SessionLock { colors: colors }
 
-    Desktop.Utilities { colors: colors }
+    Utilities { colors: colors }
 
+    ShortcutBindings {}
     
-    Desktop.ControlCenter {
+    ControlCenter {
       id: controlCenter
       colors: colors
       notifications: notificationCenter
       barInset: desktopBar.barVisible ? 30 : 0
     }
-    Desktop.Bar {
+    Bar {
       id: desktopBar
       colors: colors
       panels: systemPanels
@@ -61,7 +62,7 @@ Scope {
       capture: captureMenu
       controlCenter: controlCenter
     }
-    Desktop.ScreenHotspots {
+    ScreenHotspots {
       colors: colors
       controlCenter: controlCenter
       barVisible: desktopBar.barVisible
