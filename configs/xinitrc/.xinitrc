@@ -8,4 +8,4 @@ picom &
 
 xinput set-prop "Synaptics TM3471-020" "libinput Natural Scrolling Enabled" 1
 
-exec i3
+exec dbus-run-session i3
