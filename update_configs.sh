@@ -61,5 +61,6 @@ copy_dir "picom"      "$CONFIG_HOME/picom"
 
 copy_file "tmux"      "$HOME/.tmux.conf"
 copy_file "xinitrc"   "$HOME/.xinitrc"
+copy_file "zed"       "$CONFIG_HOME/zed/settings.json"
 
 INFO "Update finished"
