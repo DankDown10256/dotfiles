@@ -11,6 +11,7 @@ waybar=/home/$USER/.config/waybar/
 foot=/home/$USER/.config/foot/
 fish=/home/$USER/.config/fish/
 quickshell=/home/$USER/.config/quickshell/ 
+tmux=/home/$USER/.tmux.conf
 
 echo "Update configurations"
 
@@ -34,5 +35,8 @@ INFO "Fish copied"
 
 cp -r "$quickshell" ./configs/quickshell/
 INFO "Quickshell copied"
+
+cp "$tmux" ./configs/tmux/
+INFO "Tmux copied"
 
 echo "Update finished"

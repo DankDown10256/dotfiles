@@ -1,5 +1,5 @@
 # >>> hyprmon:begin >>> (auto-generated — do not edit between markers)
-monitor=eDP-1,1920x1080@60.00,0x0,1.25
+monitor=eDP-1,1920x1080@60.00,0x0,1
 
 # Fallback for unknown monitors
 monitor=,preferred,auto,1
