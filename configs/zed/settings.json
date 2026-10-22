@@ -1,0 +1,46 @@
+{
+  "minimap": {
+    "show": "always"
+  },
+  "project_panel": {
+    "sort_order": "default",
+    "diagnostic_badges": false,
+    "git_status_indicator": true,
+    "file_icons": true
+  },
+  "file_finder": {
+    "file_icons": true
+  },
+  "diagnostics_max_severity": "off",
+  "diagnostics": {
+    "include_warnings": true,
+    "lsp_pull_diagnostics": {
+      "enabled": true
+    }
+  },
+  "buffer_font_weight": 500.0,
+  "font_weight": 600,
+  "buffer_font_family": "Iosevka Nerd Font",
+  "agent_servers": {
+    "codex-acp": {
+      "type": "registry"
+    }
+  },
+  "vim_mode": true,
+  "base_keymap": "VSCode",
+  "icon_theme": {
+    "mode": "light",
+    "light": "Material Icon Theme",
+    "dark": "Zed (Default)"
+  },
+  "ui_font_size": 14,
+  "buffer_font_size": 13,
+  "theme": {
+    "mode": "dark",
+    "light": "Islands Light",
+    "dark": "Islands Dark"
+  },
+  "auto_install_extensions": {
+    "nix": true
+  }
+}
