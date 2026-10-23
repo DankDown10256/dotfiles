@@ -65,5 +65,6 @@ copy_dir "suckless"   "$CONFIG_HOME/suckless"
 copy_file "tmux"      "$HOME/.tmux.conf"
 copy_file "xinitrc"   "$HOME/.xinitrc"
 copy_file "zed"       "$CONFIG_HOME/zed/settings.json"
+copy_file "zsh"       "$HOME/.zshrc"
 
 INFO "Update finished"
