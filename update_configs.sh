@@ -4,7 +4,7 @@
 set -eu
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-DEST="./configs"
+DEST="./"
 
 INFO() {
     printf '[INFO] %s\n' "$1"
