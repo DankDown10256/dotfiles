@@ -50,7 +50,8 @@ default_border none
 default_floating_border none
 for_window [class=".*"] border none
 
-
+bindsym $mod+g exec --no-startup-id scrot -s - | xclip -selection clipboard -t image/png
+bindsym Print exec --no-startup-id mkdir -p "$HOME/Images" && scrot "$HOME/Images/screenshot-%Y-%m-%d_%H-%M-%S.png"
 
 # move tiling windows via drag & drop by left-clicking into the title bar,
 # or left-clicking anywhere into the window while holding the floating modifier.

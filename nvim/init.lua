@@ -1,4 +1,3 @@
--- Options
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.tabstop = 4
@@ -42,4 +41,10 @@ end, {})
 vim.api.nvim_create_user_command("Chskeleton", function()
     vim.cmd("0read ~/.config/nvim/skeletons/main.h")
 end, {})
-
+vim.api.nvim_create_user_command("Cmakefile", function()
+    vim.cmd("0read ~/.config/nvim/skeletons/Makefile")
+end, {})
+vim.keymap.set("n", "::", ":!", {
+    noremap = true,
+    desc = "Execute shell command",
+})
