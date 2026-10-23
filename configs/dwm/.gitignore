@@ -1,0 +1,41 @@
+# Build artifacts
+dwm
+*.o
+*.a
+*.so
+
+# Patch garbage / rejects
+*.orig
+*.rej
+*.bak
+*.old
+*.new
+*.tmp
+*.swp
+*.swo
+*~
+
+# Patch files téléchargés/appliqués localement
+*.diff
+*.patch
+
+# Generated config
+config.h
+
+# Debug / profiling
+core
+core.*
+vgcore.*
+*.gdb
+*.log
+
+# Tags / tooling
+tags
+TAGS
+cscope.*
+compile_commands.json
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
