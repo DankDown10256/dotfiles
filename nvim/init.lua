@@ -36,3 +36,10 @@ require("config.lsp")
 require("config.keymaps")
 vim.opt.laststatus = 3
 vim.opt.statusline = "%!v:lua.require('config.statusline').render()"
+vim.api.nvim_create_user_command("Cfskeleton", function()
+    vim.cmd("0read ~/.config/nvim/skeletons/main.c")
+end, {})
+vim.api.nvim_create_user_command("Chskeleton", function()
+    vim.cmd("0read ~/.config/nvim/skeletons/main.h")
+end, {})
+
