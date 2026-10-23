@@ -61,6 +61,7 @@ copy_dir "picom"      "$CONFIG_HOME/picom"
 copy_dir "nvim"       "$CONFIG_HOME/nvim"
 copy_dir "dwm"        "$CONFIG_HOME/dwm"
 copy_dir "suckless"   "$CONFIG_HOME/suckless"
+copy_dir "alacritty"  "$CONFIG_HOME/alacritty"
 
 copy_file "tmux"      "$HOME/.tmux.conf"
 copy_file "xinitrc"   "$HOME/.xinitrc"
