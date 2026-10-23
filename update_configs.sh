@@ -58,6 +58,7 @@ copy_dir "fish"       "$CONFIG_HOME/fish"
 copy_dir "quickshell" "$CONFIG_HOME/quickshell"
 copy_dir "i3"         "$CONFIG_HOME/i3"
 copy_dir "picom"      "$CONFIG_HOME/picom"
+copy_dir "nvim"       "$CONFIG_HOME/nvim"
 
 copy_file "tmux"      "$HOME/.tmux.conf"
 copy_file "xinitrc"   "$HOME/.xinitrc"
