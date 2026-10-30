@@ -74,6 +74,7 @@ bindkey '^[[B' down-line-or-beginning-search
 
 alias l='ls -al --color=auto'
 alias vim="nvim"
+alias tm="tmux"
 
 setopt PROMPT_SUBST
 

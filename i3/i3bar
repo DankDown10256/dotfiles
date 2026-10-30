@@ -7,8 +7,8 @@
 # If the above line is not correctly displayed, fix your editor first!
 
 general {
-        colors = true
-        interval = 5
+    colors = true
+    interval = 5
 }
 
 order += "ipv6"
@@ -16,6 +16,8 @@ order += "cpu_temperature 0"
 order += "disk /"
 order += "wireless _first_"
 order += "ethernet _first_"
+order += "volume master"
+order += "memory"
 order += "battery all"
 order += "tztime local"
 
@@ -34,6 +36,19 @@ ethernet _first_ {
         # format_up = "E: %ip (%speed)"
         format_up = "E: %ip (%speed)"
         format_down = "E: down"
+}
+
+volume master {
+    format = "VOL: %volume"
+    format_muted = "VOL: muted"
+    device = "pulse"
+}
+
+memory {
+    format = "RAM: %used / %total"
+    memory_used_method = "classical"
+    threshold_degraded = "10%"
+    format_degraded = "RAM: %used / %total"
 }
 
 battery all {
