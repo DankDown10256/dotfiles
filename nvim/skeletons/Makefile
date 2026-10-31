@@ -1,5 +1,5 @@
 BIN = bin_name
-SRC = source_files
+SRC = main.c
 
 make: $(SRC)
 	gcc -Wall -Wextra -o $(BIN) $(SRC)
