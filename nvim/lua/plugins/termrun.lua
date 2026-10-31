@@ -1,5 +1,5 @@
 return {
-    dir = vim.fn.expand("~/Bureau/termrun.nvim"),
+    dir = vim.fn.expand("~/Desktop/termrun.nvim"),
     name = "termrun.nvim",
     opts = {
         commands = {

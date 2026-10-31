@@ -7,7 +7,7 @@ local conf = require("telescope.config").values
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 
-local project_dir = "Bureau"
+local project_dir = "Desktop"
 local projects_dir = vim.fn.expand("~/".. project_dir .. "")
 
 function M.open()
@@ -64,6 +64,32 @@ function M.open()
         end,
     }):find()
 end
+function M.create()
+    local projects_dir = vim.fn.expand("~/".. project_dir .."")
 
+    vim.ui.input({ prompt = "Project name: " }, function(name)
+        if not name or name == "" then
+            return
+        end
+
+        if name == "." or name == ".." or name:find("[/\\]") then
+            vim.notify("Invalid project name", vim.log.levels.ERROR)
+            return
+        end
+
+        local path = projects_dir .. "/" .. name
+
+        if vim.fn.isdirectory(path) == 1 then
+            vim.notify("Project already exists", vim.log.levels.WARN)
+            return
+        end
+
+        vim.fn.mkdir(path, "p")
+        vim.cmd("cd " .. vim.fn.fnameescape(path))
+
+        Snacks.explorer({ cwd = path })
+        vim.notify("Created project: " .. name)
+    end)
+end
 return M
 
