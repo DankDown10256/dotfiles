@@ -18,7 +18,7 @@ order += "wireless _first_"
 order += "ethernet _first_"
 order += "volume master"
 order += "memory"
-order += "battery all"
+order += "battery 0"
 order += "tztime local"
 
 cpu_temperature 0 {
@@ -51,8 +51,11 @@ memory {
     format_degraded = "RAM: %used / %total"
 }
 
-battery all {
-        format = "Battery: %percentage %status %remaining"
+battery 0 {
+    format = "BAT: %percentage"
+    path = "/sys/class/power_supply/BAT%d/uevent"
+    last_full_capacity = true
+    integer_battery_capacity = true
 }
 
 tztime local {

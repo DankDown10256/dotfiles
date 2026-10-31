@@ -73,8 +73,9 @@ bindkey '^[[A' up-line-or-beginning-search
 bindkey '^[[B' down-line-or-beginning-search
 
 alias l='ls -al --color=auto'
-alias vim="nvim"
+alias e="nvim"
 alias tm="tmux"
+alias fastfetch="fastfetch -c examples/20"
 
 setopt PROMPT_SUBST
 

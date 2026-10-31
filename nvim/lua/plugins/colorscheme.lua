@@ -13,7 +13,6 @@ return {
         config = function(_, opts)
             require("kanagawa").setup({
                 opts,
-                transparent = true,
             })
             vim.cmd.colorscheme("kanagawa-dragon")
         end,
