@@ -35,10 +35,16 @@ return {
            } 
 
             dashboard.section.buttons.val = {
-                dashboard.button("f", "Find file", ":Telescope find_files<CR>"),
-                dashboard.button("g", "Find text", ":Telescope live_grep<CR>"),
-                dashboard.button("q", "Quit", ":qa<CR>"),
+                dashboard.button(
+                    "p",
+                    "  Open Project",
+                    ":lua require('workspace').open()<CR>"
+                ),
+                dashboard.button("f", "  Find Files", ":lua Snacks.picker.files({ cwd = vim.fn.getcwd() })<CR>"),
+                dashboard.button("e", "  Explorer", ":lua Snacks.explorer({ cwd = vim.fn.getcwd() })<CR>"),
+                dashboard.button("q", "  Quit", ":qa<CR>"),
             }
+            
             local date = os.date("%A")
             dashboard.section.footer.val = string.format("Hi, today is %s", date)
             local graph, highlights = require("github_graph").get()
