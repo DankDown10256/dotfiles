@@ -7,6 +7,7 @@ return {
             python = "python3 %f",
             rust = "cargo run",
             ruby = "ruby %f",
+            sh = ".%f"
         },
     },
 }
