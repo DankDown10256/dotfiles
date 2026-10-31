@@ -44,6 +44,9 @@ end, {})
 vim.api.nvim_create_user_command("Cmakefile", function()
     vim.cmd("0read ~/.config/nvim/skeletons/Makefile")
 end, {})
+vim.api.nvim_create_user_command("Gomain", function()
+    vim.cmd("0read ~/.config/nvim/skeletons/main.go")
+end, {})
 vim.keymap.set("n", "::", ":!", {
     noremap = true,
     desc = "Execute shell command",
