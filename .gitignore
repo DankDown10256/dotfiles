@@ -23,5 +23,6 @@ dwm/TAGS
 dwm/cscope.*
 dwm/compile_commands.json
 dwm/.DS_Store
+emacs/elpa/
 .idea/
 .vscode/

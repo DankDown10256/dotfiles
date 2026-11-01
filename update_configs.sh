@@ -24,8 +24,15 @@ copy_dir() {
 
     mkdir -p "$DEST/$name"
 
+    if [ "$name" = "emacs" ]; then
+        set -- --exclude='/eln-cache/'
+    else
+        set --
+    fi
+
     rsync -a --delete \
         --exclude='.git/' \
+        "$@" \
         "$source/" "$DEST/$name/"
 
     INFO "$name copied"
@@ -61,11 +68,11 @@ copy_dir "nvim"       "$CONFIG_HOME/nvim"
 copy_dir "dwm"        "$CONFIG_HOME/dwm"
 copy_dir "suckless"   "$CONFIG_HOME/suckless"
 copy_dir "alacritty"  "$CONFIG_HOME/alacritty"
+copy_dir "emacs"      "$HOME/.emacs.d"
 
 copy_file "tmux"      "$HOME/.tmux.conf"
 copy_file "xinitrc"   "$HOME/.xinitrc"
 copy_file "zed"       "$CONFIG_HOME/zed/settings.json"
 copy_file "zsh"       "$HOME/.zshrc"
-copy_file "emacs"     "$HOME/.emacs"
 
 INFO "Update finished"
