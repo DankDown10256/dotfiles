@@ -152,9 +152,10 @@
  '(ai-code-onboarding-seen t)
  '(package-selected-packages
    '(ai-code cape connection consult corfu devdocs doom-game elcord
-	     emmet-mode evil go-mode gruber-darker-theme magit-gh
-	     markdown-mode orderless projectile-rails rust-mode
-	     treemacs typescript-mode vertico vterm yaml-mode)))
+	     emmet-mode evil go-mode gruber-darker-theme hl-todo
+	     magit-gh markdown-mode orderless projectile-rails
+	     rust-mode treemacs typescript-mode vertico vterm
+	     yaml-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -213,8 +214,19 @@
   :ensure t
   :bind ("C-x g" . magit-status))
 
-(use-package magit-gh
-  :ensure t
-  :after magit)
-
 (global-set-key (kbd "C-h D") 'devdocs-lookup)
+
+(require 'dashboard)
+(dashboard-setup-startup-hook)
+
+(setq hl-todo-keyword-faces
+      '(("TODO"   . "#FF0000")
+        ("FIXME"  . "#FF0000")
+        ("DEBUG"  . "#A020F0")
+        ("GOTCHA" . "#FF4500")
+        ("STUB"   . "#1E90FF")))
+
+(evil-define-key 'normal 'global
+  (kbd "SPC w h") #'other-window
+  (kbd "SPC w l") (lambda () (interactive) (other-window -1))
+  (kbd "SPC w q") #'delete-window)
