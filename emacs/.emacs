@@ -148,10 +148,13 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ai-code-onboarding-auto-show nil)
+ '(ai-code-onboarding-seen t)
  '(package-selected-packages
-   '(cape consult corfu elcord emmet-mode evil go-mode
-	  gruber-darker-theme markdown-mode orderless rust-mode
-	  treemacs typescript-mode vertico yaml-mode)))
+   '(ai-code cape connection consult corfu doom-game elcord emmet-mode
+	     evil go-mode gruber-darker-theme markdown-mode orderless
+	     rust-mode treemacs typescript-mode vertico vterm
+	     yaml-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -197,3 +200,11 @@
   :config
   (setq elcord-display-buffer-details t)
   (elcord-mode 1))
+
+(use-package consult
+  :ensure t
+  :bind
+  (("C-x b" . consult-buffer)
+   ("C-s" . consult-line)
+   ("C-c r" . consult-ripgrep)
+   ("C-c i" . consult-imenu)))
