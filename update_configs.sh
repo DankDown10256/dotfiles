@@ -69,6 +69,7 @@ copy_dir "dwm"        "$CONFIG_HOME/dwm"
 copy_dir "suckless"   "$CONFIG_HOME/suckless"
 copy_dir "alacritty"  "$CONFIG_HOME/alacritty"
 copy_dir "emacs"      "$HOME/.emacs.d"
+copy_dir "xfce4"      "$CONFIG_HOME/xfce4"
 
 copy_file "tmux"      "$HOME/.tmux.conf"
 copy_file "xinitrc"   "$HOME/.xinitrc"
