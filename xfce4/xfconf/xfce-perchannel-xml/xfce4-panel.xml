@@ -20,6 +20,7 @@
         <value type="int" value="7"/>
         <value type="int" value="8"/>
         <value type="int" value="9"/>
+        <value type="int" value="12"/>
         <value type="int" value="11"/>
         <value type="int" value="10"/>
       </property>
@@ -52,6 +53,10 @@
       <property name="square-icons" type="bool" value="true"/>
       <property name="known-legacy-items" type="array">
         <value type="string" value="applet networkmanager"/>
+      </property>
+      <property name="known-items" type="array">
+        <value type="string" value="obs"/>
+        <value type="string" value="discord_status_icon_1"/>
       </property>
     </property>
     <property name="plugin-7" type="string" value="separator">
@@ -93,6 +98,9 @@
       <property name="default-category" type="int" value="1"/>
       <property name="menu-width" type="int" value="600"/>
       <property name="recent" type="array">
+        <value type="string" value="com.obsproject.Studio.desktop"/>
+        <value type="string" value="discord.desktop"/>
+        <value type="string" value="org.mozilla.Thunderbird.desktop"/>
         <value type="string" value="emacs.desktop"/>
         <value type="string" value="firefox.desktop"/>
         <value type="string" value="xfce-session-settings.desktop"/>
@@ -101,5 +109,8 @@
       </property>
     </property>
     <property name="plugin-11" type="string" value="power-manager-plugin"/>
+    <property name="plugin-12" type="string" value="pulseaudio">
+      <property name="enable-keyboard-shortcuts" type="bool" value="true"/>
+    </property>
   </property>
 </channel>
