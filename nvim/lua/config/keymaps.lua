@@ -14,7 +14,9 @@ vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<CR>", {
 vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<CR>", {
     desc = "Search text",
 })
-
+vim.keymap.set("n", "<leader>bb", function()
+  Snacks.picker.buffers()
+end, { desc = "Find open buffers" })
 vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<CR>", {
     desc = "Find buffers",
 })
