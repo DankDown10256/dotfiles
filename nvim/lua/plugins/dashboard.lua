@@ -35,7 +35,7 @@ return {
            } 
             
            local date = os.date("%A")
-           dashboard.section.footer.val = string.format("Hi, today is %s", date)
+           dashboard.section.footer.val = string.format("It's %s, code well !", date)
 
             dashboard.section.buttons.val = {
                 dashboard.button("p", "  Open Project", ":lua require('workspace').open()<CR>"),
@@ -45,11 +45,6 @@ return {
                 dashboard.button("c", "  Config", ":lua vim.cmd('cd ' .. vim.fn.fnameescape(vim.fn.stdpath('config'))); Snacks.explorer({ cwd = vim.fn.getcwd() })<CR>"),
                 dashboard.button("q", "  Quit", ":qa<CR>"),
             }
-
-            local graph, highlights = require("github_graph").get()
-
-            dashboard.section.footer.val = graph
-            dashboard.section.footer.opts.hl = highlights
 
             alpha.setup(dashboard.config)
         end,

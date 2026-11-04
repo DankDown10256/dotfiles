@@ -26,3 +26,10 @@ dwm/.DS_Store
 emacs/elpa/
 .idea/
 .vscode/
+emacs/auto-save-list/
+emacs/config/keymaps.el~
+emacs/devdocs/
+emacs/recentf
+emacs/session.2a195829a-9e17-488a-b729-252cc8f7c838
+emacs/session.2bc82bcb6-e27e-404b-b87a-5ba2a5c0cba2
+emacs/session.2f2b4e0f7-7082-4b54-a69a-91470b67f42f
