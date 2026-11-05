@@ -1,0 +1,5 @@
+[Libinput][1739][0][Synaptics TM3471-020]
+NaturalScroll=true
+
+[Libinput][2][7][SynPS/2 Synaptics TouchPad]
+NaturalScroll=true

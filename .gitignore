@@ -49,3 +49,12 @@ cosmic/com.system76.CosmicPortal/
 cosmic/com.system76.CosmicSettings.Wallpaper/v*/output*
 cosmic/*.bak
 cosmic/*.tmp
+kde/kdeconnect/
+kde/konsole/*.history
+kde/konsole/*.cache
+kde/kwin/*.log
+kde/kwin/*.cache
+kde/ksmserverrc
+kde/baloofilerc
+kde/kded6rc
+kde/powermanagementprofilesrc

@@ -1,0 +1,14 @@
+[Desktop Entry]
+DefaultProfile=General.profile
+
+[General]
+ConfigVersion=1
+
+[MainWindow]
+MenuBar=Enabled
+
+[Notification Messages]
+CloseSingleTab=true
+
+[UiSettings]
+ColorScheme=
