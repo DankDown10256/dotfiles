@@ -98,16 +98,16 @@
       <property name="default-category" type="int" value="1"/>
       <property name="menu-width" type="int" value="600"/>
       <property name="recent" type="array">
+        <value type="string" value="codium.desktop"/>
+        <value type="string" value="firefox.desktop"/>
         <value type="string" value="nvim.desktop"/>
         <value type="string" value="com.obsproject.Studio.desktop"/>
         <value type="string" value="spotify.desktop"/>
-        <value type="string" value="firefox.desktop"/>
         <value type="string" value="dev.zed.Zed.desktop"/>
         <value type="string" value="emacs.desktop"/>
         <value type="string" value="discord.desktop"/>
         <value type="string" value="org.mozilla.Thunderbird.desktop"/>
         <value type="string" value="xfce-session-settings.desktop"/>
-        <value type="string" value="xfce4-mime-settings.desktop"/>
       </property>
     </property>
     <property name="plugin-11" type="string" value="power-manager-plugin"/>

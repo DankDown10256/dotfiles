@@ -73,6 +73,7 @@ bindkey '^[[A' up-line-or-beginning-search
 bindkey '^[[B' down-line-or-beginning-search
 
 alias l='ls -al --color=auto'
+alias ls='ls -a --color=auto'
 alias e="nvim"
 alias tm="tmux"
 
