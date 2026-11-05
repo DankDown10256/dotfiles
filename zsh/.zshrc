@@ -1,3 +1,4 @@
+
 typeset -U path PATH
 path=(
   "$HOME/.local/bin"
@@ -31,10 +32,16 @@ setopt INTERACTIVE_COMMENTS
 setopt AUTO_PUSHD
 setopt PUSHD_IGNORE_DUPS
 setopt COMPLETE_IN_WORD
+setopt PROMPT_SUBST
+
 unsetopt BEEP
 
-autoload -Uz compinit add-zsh-hook
+autoload -Uz colors
+colors
+
+autoload -Uz compinit
 mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+
 compinit -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 
 zmodload zsh/complist
@@ -55,6 +62,7 @@ if (( $+commands[dircolors] )); then
 fi
 
 bindkey -e
+
 bindkey '^I' expand-or-complete
 bindkey '^[[Z' reverse-menu-complete
 bindkey '^[[H' beginning-of-line
@@ -66,6 +74,7 @@ bindkey '^R' history-incremental-search-backward
 bindkey '^?' backward-delete-char
 
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
 
@@ -74,34 +83,32 @@ bindkey '^[[B' down-line-or-beginning-search
 
 alias l='ls -al --color=auto'
 alias ls='ls -a --color=auto'
-alias e="nvim"
-alias tm="tmux"
+alias e='nvim'
+alias tm='tmux'
 
-setopt PROMPT_SUBST
-
-_dev_prompt_precmd() {
+git_prompt_info() {
   local branch dirty
-  _dev_git_prompt=''
 
-  (( $+commands[git] )) || return 0
+  (( $+commands[git] )) || return
 
-  branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" ||
-    branch="$(git rev-parse --short HEAD 2>/dev/null)" ||
-    return 0
+  branch=$(command git symbolic-ref --quiet --short HEAD 2>/dev/null) ||
+    branch=$(command git rev-parse --short HEAD 2>/dev/null) ||
+    return
 
-  branch="${branch//\%/%%}"
-  dirty="$(git status --porcelain --ignore-submodules=dirty 2>/dev/null)"
+  dirty=""
 
-  _dev_git_prompt=" %B%F{blue}git:(%F{red}${branch}%F{blue})%b%f"
-  [[ -n "$dirty" ]] && _dev_git_prompt+=' %F{yellow}✗%f'
+  if ! command git diff --no-ext-diff --quiet --ignore-submodules -- 2>/dev/null ||
+     ! command git diff --no-ext-diff --cached --quiet --ignore-submodules -- 2>/dev/null; then
+    dirty="%F{red}⚡"
+  fi
 
-  return 0
+  branch=${branch//\%/%%}
+
+  print -r -- "%F{blue}(${branch})%f${dirty} "
 }
 
-add-zsh-hook precmd _dev_prompt_precmd
-
-PROMPT='%B%(?.%F{green}.%F{red})➜%b%f  %F{cyan}%c%f${_dev_git_prompt} '
-RPROMPT=''
+PROMPT='%{${fg_bold[yellow]}%}%n%{$reset_color%}%{${fg[yellow]}%}@%m%{$reset_color%} $(git_prompt_info)%(?,,%{${fg_bold[white]}%}[%?]%{$reset_color%} )%{$fg[yellow]%}%#%{$reset_color%} '
+RPROMPT='%{$fg[green]%}%~%{$reset_color%}'
 
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
@@ -114,3 +121,4 @@ fi
 if [[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
   source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
+
