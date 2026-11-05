@@ -51,3 +51,7 @@ vim.keymap.set("n", "::", ":!", {
     noremap = true,
     desc = "Execute shell command",
 })
+
+vim.g.mapleader = " "
+
+require("config.compile")
