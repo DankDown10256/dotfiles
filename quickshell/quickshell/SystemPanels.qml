@@ -276,8 +276,8 @@ Scope {
     PanelWindow {
         screen: root.targetScreen
         visible: root.open
-        anchors { top: true; right: true }
-        margins { top: root.barInset + 8; right: root.popupRight }
+        anchors { bottom: true; right: true }
+        margins { bottom: root.barInset + 8; right: root.popupRight }
         implicitWidth: Math.min(root.page === "calendar" ? 360 : 400, screen.width - 20)
         implicitHeight: Math.min(screen.height - root.barInset - 20,
             Math.max(190, content.implicitHeight + headerRow.implicitHeight + tabFlow.implicitHeight + 44))

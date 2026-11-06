@@ -11,12 +11,12 @@ Scope {
     Desktop.Notifications {
       id: notificationCenter
       colors: colors
-      barInset: desktopBar.barVisible ? 30 : 0
+      barInset: desktopBar.barVisible ? 20 : 0
     }
 
     Desktop.Launcher {
       colors: colors
-      barInset: desktopBar.barVisible ? 30 : 0
+      barInset: desktopBar.barVisible ? 20 : 0
     } 
 
     Desktop.WorkspaceOverview {
@@ -39,7 +39,7 @@ Scope {
     Desktop.SystemPanels {
       id: systemPanels
       colors: colors
-      barInset: desktopBar.barVisible ? 30 : 0
+      barInset: desktopBar.barVisible ? 20 : 0
     }
 
     Desktop.SessionLock { colors: colors }
@@ -51,7 +51,7 @@ Scope {
       id: controlCenter
       colors: colors
       notifications: notificationCenter
-      barInset: desktopBar.barVisible ? 30 : 0
+      barInset: desktopBar.barVisible ? 20 : 0
     }
     Desktop.Bar {
       id: desktopBar

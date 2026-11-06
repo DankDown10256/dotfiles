@@ -1,2 +1,83 @@
-/* Configuration par défaut : lanceur d'applications. */
-@import "themes/launcher.rasi"
+configuration {
+    modi: "drun,run";
+    font: "Iosevka Nerd Font 12";
+    show-icons: false;
+    display-drun: "Apps";
+    display-run: "Run";
+    drun-display-format: "{name}";
+    disable-history: false;
+}
+
+@theme "default"
+
+* {
+    background: #282828;
+    foreground: #ebdbb2;
+    muted: #928374;
+    accent: #d79921;
+    selection: #3c3836;
+
+    background-color: @background;
+    text-color: @foreground;
+    border: 0;
+    border-radius: 0;
+}
+
+window {
+    width: 460px;
+    padding: 16px;
+    border: 1px;
+    border-color: @muted;
+}
+
+mainbox {
+    spacing: 12px;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    spacing: 10px;
+    padding: 0 0 12px;
+    border: 0 0 1px;
+    border-color: @selection;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    text-color: @accent;
+}
+
+entry {
+    placeholder: "Rechercher…";
+    placeholder-color: @muted;
+}
+
+listview {
+    lines: 7;
+    columns: 1;
+    spacing: 4px;
+    fixed-height: false;
+    scrollbar: false;
+}
+
+element {
+    padding: 8px 10px;
+    children: [ element-text ];
+}
+
+element-text {
+    background-color: inherit;
+    text-color: inherit;
+    vertical-align: 0.5;
+}
+
+element normal.normal,
+element alternate.normal {
+    background-color: @background;
+    text-color: @foreground;
+}
+
+element selected.normal {
+    background-color: @selection;
+    text-color: @accent;
+}

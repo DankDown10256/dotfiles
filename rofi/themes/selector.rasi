@@ -1,7 +1,0 @@
-@import "../shared.rasi"
-
-window { width: 72%; }
-listview { columns: 3; lines: 3; spacing: 8px; fixed-columns: true; }
-element { orientation: vertical; padding: 10px; }
-element-icon { size: 128px; horizontal-align: 0.5; }
-element-text { horizontal-align: 0.5; }

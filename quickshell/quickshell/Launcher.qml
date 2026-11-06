@@ -212,7 +212,7 @@ Scope {
                 anchors.centerIn: parent
 
                 color: launcher.cSurface
-                radius: 6
+                radius: 0
                 border.width: 1
                 border.color: launcher.colors.cBorder
 
@@ -419,7 +419,7 @@ Scope {
                                 : launcher.windowMode ? "Fenêtres"
                                 : launcher.commandMode ? "Commandes"
                                 : launcher.unifiedMode ? "Recherche rapide" : "Applications"
-                            font.family: "sans-serif"
+                            font.family: "Iosevka Nerd Font"
                             font.pixelSize: 11
                             font.bold: true
                             color: launcher.cDim
@@ -429,7 +429,7 @@ Scope {
 
                         Text {
                             text: panel.results.length + " résultats"
-                            font.family: "sans-serif"
+                            font.family: "Iosevka Nerd Font"
                             font.pixelSize: 11
                             color: launcher.cDim
                         }
@@ -454,12 +454,12 @@ Scope {
                         color: launcher.cText
                         selectionColor: launcher.cAccent
                         selectedTextColor: launcher.cBg
-                        font.family: "sans-serif"
+                        font.family: "Iosevka Nerd Font"
                         font.pixelSize: 14
                         leftPadding: 12
                         rightPadding: 12
                         background: Rectangle {
-                            radius: 6
+                            radius: 0
                             color: launcher.colors.cElevated
                             border.width: 1
                             border.color: search.activeFocus
@@ -522,7 +522,7 @@ Scope {
 
                             width: ListView.view.width
                             height: 44
-                            radius: 4
+                            radius: 0
                             color: ListView.isCurrentItem
                                 ? launcher.cSel
                                 : resultMouse.containsMouse
@@ -538,14 +538,10 @@ Scope {
                                 anchors.rightMargin: 12
                                 spacing: 12
 
-                                IconImage {
-                                    implicitSize: 20
-                                    source: Quickshell.iconPath(item.entry.icon, "application-x-executable")
-                                }
                                 Text {
                                     text: item.entry.name
                                     color: launcher.cText
-                                    font.family: "sans-serif"
+                                    font.family: "Iosevka Nerd Font"
                                     font.pixelSize: 13
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
@@ -556,7 +552,7 @@ Scope {
                                     text: item.entry.detail
                                     Layout.maximumWidth: 140
                                     elide: Text.ElideMiddle
-                                    font.family: "sans-serif"
+                                    font.family: "Iosevka Nerd Font"
                                     font.pixelSize: 11
                                     color: launcher.cDim
                                 }
@@ -566,7 +562,7 @@ Scope {
                                     text: item.entry.path || ""
                                     Layout.maximumWidth: 140
                                     elide: Text.ElideMiddle
-                                    font.family: "sans-serif"
+                                    font.family: "Iosevka Nerd Font"
                                     font.pixelSize: 11
                                     color: launcher.cDim
                                 }
@@ -577,7 +573,7 @@ Scope {
                                         ? "WS " + item.entry.workspace : ""
                                     Layout.maximumWidth: 80
                                     elide: Text.ElideRight
-                                    font.family: "sans-serif"
+                                    font.family: "Iosevka Nerd Font"
                                     font.pixelSize: 11
                                     color: launcher.cDim
                                 }
@@ -627,7 +623,7 @@ Scope {
                             : panel.results.length === 0
                             ? "↵ Recherche web · youtube: pour YouTube · Échap fermer"
                             : "↑↓ Choisir     ↵ Ouvrir     Échap Fermer"
-                        font.family: "sans-serif"
+                        font.family: "Iosevka Nerd Font"
                         font.pixelSize: 11
                         color: launcher.cDim
                         elide: Text.ElideRight

@@ -1,5 +1,0 @@
-@import "../shared.rasi"
-
-configuration { show-icons: false; }
-window { width: 32%; }
-listview { columns: 1; lines: 8; }

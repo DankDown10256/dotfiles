@@ -78,6 +78,12 @@ Scope {
 
         onNotification: notification => {
             notification.tracked = true
+            const tracked = server.trackedNotifications.values.slice()
+            while (tracked.length > 100) {
+                const oldest = tracked.shift()
+                root.popupIds = root.popupIds.filter(id => id !== oldest.id)
+                oldest.dismiss()
+            }
             if (root.dnd || root.open || notification.lastGeneration) {
                 if (notification.transient)
                     notification.expire()
@@ -174,7 +180,7 @@ Scope {
                     root.history.length === 0 ? 160
                         : Math.min(560, historyList.contentHeight + 80)
                 )
-                radius: 6
+                radius: 0
                 color: root.colors.cSurface
                 border.width: 1
                 border.color: root.colors.cBorder
@@ -226,7 +232,7 @@ Scope {
                         Text {
                             Layout.fillWidth: true
                             text: "Notifications · " + root.history.length
-                            font.family: "sans-serif"
+                            font.family: "Iosevka Nerd Font"
                             font.pixelSize: 13
                             color: root.colors.cText
                             elide: Text.ElideRight
@@ -237,7 +243,7 @@ Scope {
                             text: root.dnd ? "DND actif" : "DND"
                             onClicked: root.dnd = !root.dnd
                             contentItem: Text { text: parent.text; color: root.dnd ? root.colors.cAccent : root.colors.cText; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; horizontalAlignment: Text.AlignHCenter }
-                            background: Rectangle { radius: 6; color: root.dnd ? root.colors.cSelection : root.colors.cElevated }
+                            background: Rectangle { radius: 0; color: root.dnd ? root.colors.cSelection : root.colors.cElevated }
                         }
 
                         Button {
@@ -249,7 +255,7 @@ Scope {
 
                             contentItem: Text {
                                 text: parent.text
-                                font.family: "sans-serif"
+                                font.family: "Iosevka Nerd Font"
                                 font.pixelSize: 11
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
@@ -258,7 +264,7 @@ Scope {
                             }
 
                             background: Rectangle {
-                                radius: 6
+                                radius: 0
                                 color: parent.hovered || parent.activeFocus
                                     ? root.colors.cSelection : root.colors.cElevated
 
@@ -276,7 +282,7 @@ Scope {
                         text: "Aucune notification"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        font.family: "sans-serif"
+                        font.family: "Iosevka Nerd Font"
                         font.pixelSize: 13
                         color: root.colors.cMuted
                     }

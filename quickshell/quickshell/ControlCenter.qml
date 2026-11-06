@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Services.Mpris
+import Quickshell.Networking
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
@@ -47,7 +48,11 @@ Scope {
 
     property int brightness: 0
     property bool brightnessAvailable: false
-    property bool wifiEnabled: true
+    readonly property bool wifiEnabled: Networking.wifiEnabled
+    readonly property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi) || null
+    readonly property var wifiNetworks: wifiDevice?.networks?.values || []
+    property int timerDuration: 25
+
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property int volume: sink?.audio ? Math.round(sink.audio.volume * 100) : 0
@@ -76,51 +81,8 @@ Scope {
         }
     }
 
-    QtObject {
-        id: wifiInfo
-        property string ssid: "Non connecté"
-    }
-
-    QtObject {
-        id: userInfo
-        property string username: "dev"
-    }
-
-    Process {
-        id: userProc
-        running: true
-        command: ["whoami"]
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.trim() !== "") userInfo.username = data.trim()
-            }
-        }
-    }
-
-    Process {
-        id: wifiProc
-        command: ["env", "LC_ALL=C", "nmcli", "-t", "-f", "active,ssid", "dev", "wifi", "list", "--rescan", "no"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const line = text.split("\n").find(l => l.startsWith("yes:"))
-                wifiInfo.ssid = line ? line.substring(4) : "Non connecté"
-            }
-        }
-    }
-
-    Process {
-        id: wifiRadioProc
-        command: ["env", "LC_ALL=C", "nmcli", "radio", "wifi"]
-        stdout: StdioCollector {
-            onStreamFinished: root.wifiEnabled = text.trim() === "enabled"
-        }
-    }
-
-    Process {
-        id: wifiToggleProc
-        command: ["nmcli", "radio", "wifi", root.wifiEnabled ? "off" : "on"]
-        onRunningChanged: if (!running) wifiRadioProc.running = true
-    }
+    QtObject { id: wifiInfo; readonly property string ssid: root.wifiNetworks.find(n => n.connected)?.name || "Non connecté" }
+    QtObject { id: userInfo; readonly property string username: "Contrôles" }
 
     Process {
         id: briProc
@@ -134,39 +96,13 @@ Scope {
         }
     }
 
-    Process {
-        id: aiDetectorProc
-        command: ["ps", "-eo", "comm=,args="]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const base = s => (s ?? "").split("/").pop().replace(/\.js$/, "")
-                const names = []
-                for (const line of text.split("\n")) {
-                    const t = line.trim().split(/\s+/)
-                    for (const c of [t[0], base(t[1]), base(t[2])]) {
-                        if (root.aiTools.hasOwnProperty(c) && !names.includes(root.aiTools[c]))
-                            names.push(root.aiTools[c])
-                    }
-                    if (line.startsWith("Vibe CLI") && !names.includes("Mistral Vibe"))
-                        names.push("Mistral Vibe")
-                }
-                root.aiActive = names.length > 0
-                root.aiToolName = names.join(", ")
-                root.aiCount = names.length
-            }
-        }
-    }
-
     Timer {
         interval: 3000
         running: root.alive
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            wifiProc.running = true
-            wifiRadioProc.running = true
             briProc.running = true
-            aiDetectorProc.running = true
         }
     }
 
@@ -176,17 +112,21 @@ Scope {
         repeat: true
         running: root.pomoRunning
         onTriggered: {
-            if (root.pomoSeconds > 0) {
+            if (root.pomoMinutes === 0 && root.pomoSeconds === 1) {
+                root.pomoRunning = false
+                root.pomoMinutes = root.timerDuration
+                root.pomoSeconds = 0
+                Quickshell.execDetached(["notify-send", "Minuteur terminé", "La durée est écoulée."])
+            } else if (root.pomoSeconds > 0) {
                 root.pomoSeconds--
             } else if (root.pomoMinutes > 0) {
                 root.pomoMinutes--
                 root.pomoSeconds = 59
             } else {
-                root.pomoIsWork = !root.pomoIsWork
-                root.pomoMinutes = root.pomoIsWork ? 25 : 5
-                root.pomoSeconds = 0
                 root.pomoRunning = false
-                Quickshell.execDetached(["notify-send", root.pomoIsWork ? "Pause terminée !" : "Pomodoro terminé !", "Temps de changer d'activité."])
+                root.pomoMinutes = root.timerDuration
+                root.pomoSeconds = 0
+                Quickshell.execDetached(["notify-send", "Minuteur terminé", "La durée est écoulée."])
             }
         }
     }
@@ -232,13 +172,13 @@ Scope {
                     controlsContent.implicitHeight + 24,
                     parent.height - root.barInset - 16
                 )
-                anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 anchors.right: parent.right
-                anchors.topMargin: root.barInset + 8
-                anchors.rightMargin: 12
+                anchors.bottomMargin: root.barInset + 8
+                anchors.rightMargin: 8
 
                 color: root.colSurface
-                radius: 6
+                radius: 0
                 border.width: 1
                 border.color: root.colors.cBorder
 
@@ -294,7 +234,7 @@ Scope {
 
                             Text {
                                 text: userInfo.username
-                                font.family: "sans-serif"
+                                font.family: "Iosevka Nerd Font"
                                 font.pixelSize: 14
                                 font.bold: true
                                 color: root.colText
@@ -304,7 +244,7 @@ Scope {
 
                             Text {
                                 id: clockText
-                                font.family: "sans-serif"
+                                font.family: "Iosevka Nerd Font"
                                 font.pixelSize: 14
                                 font.bold: false
                                 color: root.colText
@@ -322,38 +262,6 @@ Scope {
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.columnSpan: 2
-                            Layout.preferredHeight: 36
-                            color: root.colors.cElevated
-                            radius: 6
-                            visible: root.aiActive
-                            border.width: 0
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 8
-                                spacing: 8
-
-                                Text {
-                                    text: "\uF121"
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 14
-                                    color: root.colAccent
-                                }
-
-                                Text {
-                                    text: root.aiToolName + (root.aiCount > 1 ? " sont" : " est") + " en train de travailler..."
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                    color: root.colText
-                                    Layout.fillWidth: true
-                                    elide: Text.ElideRight
-                                }
-                            }
-                        }
-
                         RowLayout {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
@@ -366,7 +274,7 @@ Scope {
                                 color: root.dndActive ? root.colSelection
                                     : silenceMouse.containsMouse
                                         ? root.colSelection : root.colors.cElevated
-                                radius: 6
+                                radius: 0
 
                                 Behavior on color {
                                     ColorAnimation { duration: 120 }
@@ -377,7 +285,7 @@ Scope {
                                     spacing: 8
                                     Text {
                                         text: "\uF1F8"
-                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.family: "Iosevka Nerd Font"
                                         font.pixelSize: 14
                                         color: root.dndActive ? root.colAccent : root.colText
                                     }
@@ -405,7 +313,7 @@ Scope {
                                 Layout.preferredHeight: 36
                                 color: focusMouse.containsMouse
                                     ? root.colSelection : root.colors.cElevated
-                                radius: 6
+                                radius: 0
 
                                 Behavior on color {
                                     ColorAnimation { duration: 120 }
@@ -416,7 +324,7 @@ Scope {
                                     spacing: 8
                                     Text {
                                         text: "\uF2F2"
-                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.family: "Iosevka Nerd Font"
                                         font.pixelSize: 14
                                         color: root.pomoRunning ? root.colAccent : root.colMuted
                                     }
@@ -436,65 +344,51 @@ Scope {
                                     onDoubleClicked: {
                                         root.pomoRunning = false
                                         root.pomoIsWork = true
-                                        root.pomoMinutes = 25
+                                        root.pomoMinutes = root.timerDuration
                                         root.pomoSeconds = 0
                                     }
                                 }
                             }
                         }
 
-                        Rectangle {
+                        RowLayout {
                             Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.preferredWidth: 1
-                            Layout.preferredHeight: 60
-                            color: root.colors.cElevated
-                            radius: 6
-
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 12
-                                spacing: 6
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    Text {
-                                        text: root.pomoIsWork ? "Session de Focus" : "Pause Café"
-                                        font.pixelSize: 12
-                                        font.bold: true
-                                        color: root.colText
-                                    }
-                                    Item { Layout.fillWidth: true }
-                                    Text {
-                                        text: root.pomoRunning ? "En cours · double-clic : reset" : "En pause"
-                                        font.pixelSize: 11
-                                        color: root.colMuted
-                                        Layout.fillWidth: true
-                                        Layout.minimumWidth: 0
-                                        horizontalAlignment: Text.AlignRight
-                                        elide: Text.ElideRight
-                                    }
+                            Layout.columnSpan: 2
+                            Text { text: "Minuteur (min)"; color: root.colText; font.family: "Iosevka Nerd Font" }
+                            SpinBox {
+                                id: durationInput
+                                from: 1; to: 999; value: root.timerDuration
+                                implicitWidth: 92; implicitHeight: 32
+                                enabled: !root.pomoRunning
+                                onValueModified: { root.timerDuration = value; root.pomoMinutes = value; root.pomoSeconds = 0 }
+                                contentItem: TextInput {
+                                    text: durationInput.textFromValue(durationInput.value, durationInput.locale)
+                                    color: durationInput.enabled ? root.colText : root.colMuted
+                                    font.family: "Iosevka Nerd Font"; font.pixelSize: 12
+                                    horizontalAlignment: Qt.AlignHCenter; verticalAlignment: Qt.AlignVCenter
+                                    readOnly: true
                                 }
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 6
-                                    color: root.colSelection
-                                    radius: 3
-
-                                    Rectangle {
-                                        readonly property real totalSec: (root.pomoIsWork ? 25 : 5) * 60
-                                        readonly property real currentSec: (root.pomoMinutes * 60) + root.pomoSeconds
-                                        width: parent.width * (1.0 - (currentSec / totalSec))
-                                        height: parent.height
-                                        color: root.colAccent
-                                        radius: 3
-
-                                        Behavior on width {
-                                            NumberAnimation { duration: 120 }
-                                        }
-                                    }
+                                background: Rectangle { color: root.colors.cElevated; border.color: root.colors.cBorder }
+                                up.indicator: Rectangle {
+                                    x: durationInput.width - width; width: 25; height: durationInput.height
+                                    color: durationInput.up.pressed ? root.colSelection : root.colors.cSurface
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.colText; font.family: "Iosevka Nerd Font" }
                                 }
+                                down.indicator: Rectangle {
+                                    x: 0; width: 25; height: durationInput.height
+                                    color: durationInput.down.pressed ? root.colSelection : root.colors.cSurface
+                                    Text { anchors.centerIn: parent; text: "−"; color: root.colText; font.family: "Iosevka Nerd Font" }
+                                }
+                            }
+                            Button { text: root.pomoRunning ? "Pause" : "Démarrer"; onClicked: root.pomoRunning = !root.pomoRunning
+                                implicitHeight: 32; leftPadding: 10; rightPadding: 10
+                                contentItem: Text { text: parent.text; color: root.colText; font.family: "Iosevka Nerd Font"; font.pixelSize: 11; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                background: Rectangle { color: parent.down || parent.hovered ? root.colSelection : root.colors.cElevated; border.color: root.colors.cBorder }
+                            }
+                            Button { text: "Reset"; onClicked: { root.pomoRunning = false; root.pomoMinutes = root.timerDuration; root.pomoSeconds = 0 }
+                                implicitHeight: 32; leftPadding: 10; rightPadding: 10
+                                contentItem: Text { text: parent.text; color: root.colText; font.family: "Iosevka Nerd Font"; font.pixelSize: 11; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                background: Rectangle { color: parent.down || parent.hovered ? root.colSelection : root.colors.cElevated; border.color: root.colors.cBorder }
                             }
                         }
 
@@ -505,7 +399,7 @@ Scope {
                             Layout.columnSpan: 2
                             Layout.preferredHeight: 56
                             color: root.colors.cElevated
-                            radius: 6
+                            radius: 0
 
                             RowLayout {
                                 anchors.fill: parent
@@ -514,7 +408,7 @@ Scope {
 
                                 Text {
                                     text: "\uF1EB"
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.family: "Iosevka Nerd Font"
                                     font.pixelSize: 14
                                     color: root.wifiEnabled ? root.colAccent : root.colMuted
                                 }
@@ -544,7 +438,7 @@ Scope {
                                 Rectangle {
                                     implicitWidth: 62
                                     implicitHeight: 28
-                                    radius: 4
+                                    radius: 0
                                     color: wifiToggleMouse.containsMouse ? root.colSelection : root.colSurface
                                     Text {
                                         anchors.centerIn: parent
@@ -556,7 +450,7 @@ Scope {
                                         id: wifiToggleMouse
                                         anchors.fill: parent
                                         hoverEnabled: true
-                                        onClicked: wifiToggleProc.running = true
+                                        onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
                                     }
                                 }
                             }
@@ -568,7 +462,7 @@ Scope {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 72
                             color: root.colors.cElevated
-                            radius: 6
+                            radius: 0
 
                             RowLayout {
                                 anchors.fill: parent
@@ -577,7 +471,7 @@ Scope {
 
                                 Text {
                                     text: root.muted ? "\uF6A9" : "\uF028"
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.family: "Iosevka Nerd Font"
                                     font.pixelSize: 14
                                     color: root.muted ? root.colDanger : root.colMuted
                                 }
@@ -607,13 +501,13 @@ Scope {
                                             y: volumeSlider.topPadding + volumeSlider.availableHeight / 2 - 4
                                             width: volumeSlider.availableWidth
                                             height: 8
-                                            radius: 4
+                                            radius: 0
                                             color: root.colSelection
 
                                             Rectangle {
                                                 width: volumeSlider.visualPosition * parent.width
                                                 height: parent.height
-                                                radius: 4
+                                                radius: 0
                                                 color: root.colAccent
                                             }
                                         }
@@ -623,7 +517,7 @@ Scope {
                                             y: volumeSlider.topPadding + volumeSlider.availableHeight / 2 - 7
                                             width: 14
                                             height: 14
-                                            radius: 7
+                                            radius: 0
                                             color: root.colText
                                             border.width: 2
                                             border.color: root.colAccent
@@ -643,7 +537,7 @@ Scope {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 72
                             color: root.colors.cElevated
-                            radius: 6
+                            radius: 0
 
                             RowLayout {
                                 anchors.fill: parent
@@ -652,7 +546,7 @@ Scope {
 
                                 Text {
                                     text: "\uF185"
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.family: "Iosevka Nerd Font"
                                     font.pixelSize: 14
                                     color: root.colMuted
                                 }
@@ -682,13 +576,13 @@ Scope {
                                             y: brightnessSlider.topPadding + brightnessSlider.availableHeight / 2 - 4
                                             width: brightnessSlider.availableWidth
                                             height: 8
-                                            radius: 4
+                                            radius: 0
                                             color: root.colSelection
 
                                             Rectangle {
                                                 width: brightnessSlider.visualPosition * parent.width
                                                 height: parent.height
-                                                radius: 4
+                                                radius: 0
                                                 color: root.colAccent
                                             }
                                         }
@@ -698,7 +592,7 @@ Scope {
                                             y: brightnessSlider.topPadding + brightnessSlider.availableHeight / 2 - 7
                                             width: 14
                                             height: 14
-                                            radius: 7
+                                            radius: 0
                                             color: root.colText
                                             border.width: 2
                                             border.color: root.colAccent
@@ -719,7 +613,7 @@ Scope {
                             Layout.preferredHeight: 88
                             visible: root.player !== null
                             color: root.colors.cElevated
-                            radius: 6
+                            radius: 0
 
                             ColumnLayout {
                                 anchors.fill: parent
@@ -748,14 +642,14 @@ Scope {
                                     spacing: 24
 
                                     Repeater {
-                                        model: ["\uf048", root.player?.isPlaying
-                                            ? "\uf04c" : "\uf04b", "\uf051"]
+                                        model: ["Préc.", root.player?.isPlaying
+                                            ? "Pause" : "Lecture", "Suiv."]
 
                                         delegate: Text {
                                             required property string modelData
                                             required property int index
                                             text: modelData
-                                            font.family: "JetBrainsMono Nerd Font"
+                                            font.family: "Iosevka Nerd Font"
                                             font.pixelSize: 14
                                             color: index === 1 ? root.colAccent : root.colText
                                             opacity: enabled ? 1 : 0.35
@@ -778,83 +672,6 @@ Scope {
                             }
                         }
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.columnSpan: 2
-                            spacing: 10
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 36
-                                color: root.colors.cElevated
-                                radius: 6
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uF023"
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 14
-                                    color: root.colText
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["qs", "ipc", "call", "session", "lock"])
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 36
-                                color: root.colors.cElevated
-                                radius: 6
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uF08B"
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 14
-                                    color: root.colText
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["hyprctl", "dispatch", "exit"])
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 36
-                                color: root.colors.cElevated
-                                radius: 6
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uF01E"
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 14
-                                    color: root.colText
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["systemctl", "reboot"])
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 36
-                                color: Qt.alpha(root.colDanger, 0.12)
-                                radius: 6
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uF011"
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 14
-                                    color: root.colDanger
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["systemctl", "poweroff"])
-                                }
-                            }
-                        }
                     }
                 }
             }

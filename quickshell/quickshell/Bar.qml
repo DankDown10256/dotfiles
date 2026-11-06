@@ -7,6 +7,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
 import Quickshell.Services.Mpris
 import Quickshell.Services.UPower
+import Quickshell.Networking
 import QtQuick
 import QtQuick.Layouts
 
@@ -20,24 +21,18 @@ Scope {
     required property var capture
     required property var controlCenter
     property bool caffeine: false
-    property int updateCount: 0
-    property string keyboardLayout: ""
-    property bool ethernetUp: false
-    readonly property var microphone: Pipewire.defaultAudioSource
-    property bool microphoneReady: false
-    PwObjectTracker { objects: [root.microphone] }
+    readonly property bool ethernetUp: Networking.devices.values.some(d => d.type === DeviceType.Wired && d.connected)
+    readonly property bool wifiUp: Networking.devices.values.some(d => d.type === DeviceType.Wifi && d.connected)
+    readonly property var sink: Pipewire.defaultAudioSink
+    PwObjectTracker { objects: [root.sink] }
     Connections {
-        target: root.microphone?.audio || null
-        function onMutedChanged() {
-            if (root.microphoneReady)
-                root.showOsd("microphone", Math.round((root.microphone?.audio?.volume || 0) * 100), root.microphone?.audio?.muted || false)
-            root.microphoneReady = true
-        }
-        function onVolumesChanged() {
-            if (root.microphoneReady)
-                root.showOsd("microphone", Math.round((root.microphone?.audio?.volume || 0) * 100), root.microphone?.audio?.muted || false)
-            root.microphoneReady = true
-        }
+        target: root.sink?.audio || null
+        function onMutedChanged() { root.audioChanged() }
+        function onVolumesChanged() { root.audioChanged() }
+    }
+    function audioChanged() {
+        if (audioReady) showOsd("volume", volume, muted)
+        audioReady = true
     }
 
     IpcHandler {
@@ -59,10 +54,10 @@ Scope {
     readonly property color dim: colors.cMuted
     readonly property color accent: colors.cAccent
     readonly property color warn: colors.cWarning
-    readonly property string font: "JetBrainsMono Nerd Font"
+    readonly property string font: "Iosevka Nerd Font"
 
-    property int volume: 0
-    property bool muted: false
+    readonly property int volume: Math.round((sink?.audio?.volume || 0) * 100)
+    readonly property bool muted: sink?.audio?.muted || false
 
     property bool audioReady: false
     property bool brightnessReady: false
@@ -82,31 +77,18 @@ Scope {
         osdTimeout.restart()
     }
 
-    Connections {
-        target: Hyprland
-        function onFocusedWorkspaceChanged() {
-            if (Hyprland.focusedWorkspace) {
-                root.osdLabel = "Espace " + Hyprland.focusedWorkspace.id
-                root.showOsd("workspace", 100, false)
-            }
-        }
-    }
-
     IpcHandler {
         target: "osd"
 
         function volume(): void {
-            root.audioRequested = true
-            if (!audioReader.running) audioReader.running = true
+            root.showOsd("volume", root.volume, root.muted)
         }
 
         function brightness(): void {
             root.brightnessRequested = true
             if (!briProc.running) briProc.running = true
         }
-        function microphone(): void {
-            root.showOsd("microphone", Math.round((root.microphone?.audio?.volume || 0) * 100), root.microphone?.audio?.muted || false)
-        }
+
     }
 
     Timer {
@@ -217,98 +199,6 @@ Scope {
         }
     }
 
-    Process {
-        id: audioReader
-        command: ["env", "LC_ALL=C", "sh", "-c",
-            "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const vol = text.match(/(\d+)%/)
-                const mute = text.match(/Mute:\s*(yes|no)/)
-                if (!vol || !mute) {
-                    root.audioRequested = false
-                    return
-                }
-                const nextVolume = parseInt(vol[1])
-                const nextMuted = mute[1] === "yes"
-                const changed = nextVolume !== root.volume || nextMuted !== root.muted
-                root.volume = nextVolume
-                root.muted = nextMuted
-                if ((root.audioReady && changed) || root.audioRequested)
-                    root.showOsd("volume", nextVolume, nextMuted)
-                root.audioReady = true
-                root.audioRequested = false
-            }
-        }
-    }
-
-    Timer {
-        id: audioDebounce
-        interval: 50
-        onTriggered: if (!audioReader.running) audioReader.running = true
-    }
-
-    Process {
-        running: true
-        command: ["pactl", "subscribe"]
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.includes("sink") || data.includes("server"))
-                    audioDebounce.restart()
-            }
-        }
-    }
-
-    Component.onCompleted: audioReader.running = true
-
-    property bool wifiUp: false
-    property int wifiSignal: 0
-    Process {
-        id: wifiProc
-        command: ["nmcli", "-t", "-f", "IN-USE,SIGNAL,SSID", "dev", "wifi", "list", "--rescan", "no"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const line = text.split("\n").find(l => l.startsWith("*:"));
-                if (!line) { root.wifiUp = false; return; }
-                root.wifiUp = true;
-                root.wifiSignal = parseInt(line.split(":")[1]) || 0;
-            }
-        }
-    }
-    Timer {
-        interval: 5000; running: true; repeat: true; triggeredOnStart: true
-        onTriggered: wifiProc.running = true
-    }
-
-    Process {
-        id: ethernetProc
-        command: ["env", "LC_ALL=C", "nmcli", "-t", "-f", "TYPE,STATE", "device"]
-        stdout: StdioCollector { onStreamFinished: root.ethernetUp = text.split("\n").some(line => line.startsWith("ethernet:connected")) }
-    }
-    Process {
-        id: keyboardProc
-        command: ["hyprctl", "devices", "-j"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const devices = JSON.parse(text)
-                    const keyboard = devices.keyboards.find(item => item.main) || devices.keyboards[0]
-                    root.keyboardLayout = keyboard?.active_keymap || ""
-                } catch (error) { root.keyboardLayout = "" }
-            }
-        }
-    }
-    Process {
-        id: updatesProc
-        command: ["pacman", "-Qu"]
-        stdout: StdioCollector { onStreamFinished: root.updateCount = text.split("\n").filter(Boolean).length }
-    }
-    Timer {
-        interval: 5000; running: true; repeat: true; triggeredOnStart: true
-        onTriggered: { ethernetProc.running = true; keyboardProc.running = true }
-    }
-    Timer { interval: 3600000; running: true; repeat: true; triggeredOnStart: true; onTriggered: updatesProc.running = true }
-
     property int brightness: 0
     Process {
         id: briProc
@@ -335,38 +225,6 @@ Scope {
         onTriggered: briProc.running = true
     }
 
-    property bool batPresent: false
-    property int batPercent: 0
-    property bool batCharging: false
-    Process {
-        id: batProc
-        command: ["sh", "-c",
-            "cat /sys/class/power_supply/BAT0/capacity /sys/class/power_supply/BAT0/status 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const l = text.trim().split("\n");
-                if (l.length < 2) { root.batPresent = false; return; }
-                root.batPresent = true;
-                root.batPercent = parseInt(l[0]) || 0;
-                root.batCharging = l[1] === "Charging";
-            }
-        }
-    }
-    Timer {
-        interval: 10000; running: true; repeat: true; triggeredOnStart: true
-        onTriggered: batProc.running = true
-    }
-    function batIcon() {
-        const charge = panels.battery?.isPresent ? Math.round(panels.battery.percentage * 100)
-            : panels.batteryPresent ? panels.batteryPercent : batPercent
-        if (batCharging || panels.batteryCharging) return "\uf0e7";
-        if (charge > 85) return "\uf240";
-        if (charge > 60) return "\uf241";
-        if (charge > 35) return "\uf242";
-        if (charge > 10) return "\uf243";
-        return "\uf244";
-    }
-
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
     readonly property var player: {
@@ -385,230 +243,84 @@ Scope {
 
     Variants {
         model: Quickshell.screens
-
         PanelWindow {
             id: bar
             required property var modelData
             screen: modelData
-            readonly property bool fullscreenWindow: Hyprland.monitors.values.some(m =>
-                m.name === screen.name && m.hasFullscreen)
-            visible: root.barVisible && !fullscreenWindow
+            visible: root.barVisible
+            anchors { bottom: true; left: true; right: true }
+            implicitHeight: 20
+            exclusiveZone: root.barVisible ? implicitHeight : 0
+            color: root.bg
 
-            anchors { top: true; left: true; right: true }
-            implicitHeight: 25
-            exclusiveZone: visible ? implicitHeight : 0
-            color: "transparent"
+            readonly property var monitor: Hyprland.monitors.values.find(m => m.name === screen.name)
+            readonly property var workspaces: Hyprland.workspaces.values
+                .filter(w => w.monitor?.name === screen.name && (w.id === bar.monitor?.activeWorkspace?.id || Hyprland.toplevels.values.some(t => t.workspace?.id === w.id)))
+                .sort((a, b) => a.id - b.id)
 
-            Rectangle {
+            RowLayout {
                 anchors.fill: parent
-                color: root.bg
-                border.width: 1
-                border.color: root.colors.cBorder
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    spacing: 6
-
-                    Rectangle {
-                        implicitWidth: 26; implicitHeight: 24; radius: 4
-                        color: launchMouse.containsMouse ? root.colors.cSelection : "transparent"
-                        Text { anchors.centerIn: parent; text: "\uf0c9"; color: root.accent; font.family: root.font; font.pixelSize: 13 }
-                        MouseArea { id: launchMouse; anchors.fill: parent; hoverEnabled: true; onClicked: Quickshell.execDetached(["qs", "ipc", "call", "launcher", "toggle"]) }
-                    }
-
-                    Repeater {
-                        model: 10
-                        delegate: Rectangle {
-                            required property int index
-                            readonly property int wsId: index + 1
-                            readonly property bool focused: Hyprland.monitors.values.some(m => m.name === bar.screen.name && m.activeWorkspace?.id === wsId)
-                            readonly property bool occupied: Hyprland.toplevels.values.some(w => w.workspace?.id === wsId)
-                            implicitWidth: 24
-                            implicitHeight: 24
-                            radius: 4
-                            color: focused ? root.colors.cSelection : wsMouse.containsMouse ? root.colors.cElevated : "transparent"
-                            Text {
-                                anchors.centerIn: parent
-                                text: wsId
-                                color: focused ? root.accent : occupied ? root.fg : root.dim
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: focused
-                            }
-                            MouseArea {
-                                id: wsMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: mouse => {
-                                    if (mouse.button === Qt.RightButton)
-                                        Quickshell.execDetached(["qs", "ipc", "call", "workspaceoverview", "toggle"])
-                                    else
-                                        Hyprland.dispatch("workspace " + wsId)
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle { Layout.alignment: Qt.AlignVCenter; implicitWidth: 1; implicitHeight: 14; color: root.colors.cBorder }
-
-                    Text {
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        Layout.maximumWidth: Math.max(0, Math.min(230, bar.width / 2 - 420))
-                        text: Hyprland.activeToplevel?.monitor?.name === bar.screen.name
-                            ? Hyprland.activeToplevel.title : "Desktop"
-                        color: root.fg
-                        font.family: "sans-serif"
-                        font.pixelSize: 12
-                        elide: Text.ElideRight
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    RowLayout {
-                        spacing: 7
-                        Text {
-                            visible: root.notifications.dnd
-                            text: ""; color: root.warn; font.family: root.font; font.pixelSize: 12
-                            MouseArea { anchors.fill: parent; onClicked: root.notifications.dnd = false }
-                        }
-                        Text {
-                            visible: root.panels.nightLight
-                            text: ""; color: root.warn; font.family: root.font; font.pixelSize: 12
-                            MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("brightness", bar.screen, mapToItem(null, width, 0).x) }
-                        }
-                        Text {
-                            visible: root.capture.recording
-                            text: "● REC"; color: root.colors.cDanger; font.family: root.font; font.pixelSize: 11
-                            MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached(["qs", "ipc", "call", "capture", "toggle"]) }
-                        }
-                        Text {
-                            visible: root.caffeine
-                            text: ""; color: root.accent; font.family: root.font; font.pixelSize: 12
-                            MouseArea { anchors.fill: parent; onClicked: root.caffeine = false }
-                        }
-                    }
-
-                    RowLayout {
-                        spacing: 6
-                        Repeater {
-                            model: SystemTray.items
-                            delegate: MouseArea {
-                                id: trayItem
-                                required property var modelData
-                                implicitWidth: 20
-                                implicitHeight: 20
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: mouse => {
-                                    if (mouse.button === Qt.LeftButton && !modelData.onlyMenu) modelData.activate()
-                                    else if (modelData.hasMenu) {
-                                        const p = mapToItem(null, mouse.x, mouse.y)
-                                        modelData.display(bar, p.x, p.y)
-                                    }
-                                }
-                                IconImage { anchors.fill: parent; source: trayItem.modelData.icon }
-                            }
-                        }
-                    }
-
-                    Rectangle { Layout.alignment: Qt.AlignVCenter; implicitWidth: 1; implicitHeight: 14; color: root.colors.cBorder }
-
-                    Text {
-                        text: root.ethernetUp ? "\uf6ff" : "\uf1eb"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        color: root.ethernetUp || root.wifiUp ? root.fg : root.dim
-                        MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("network", bar.screen, mapToItem(null, width, 0).x) }
-                    }
-
-                    Text {
-                        text: root.muted ? "\uf6a9" : "\uf028"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        color: root.muted ? root.warn : root.fg
+                spacing: 0
+                Repeater {
+                    model: ScriptModel { values: bar.workspaces }
+                    delegate: Rectangle {
+                        required property var modelData
+                        Layout.fillHeight: true
+                        implicitWidth: 28
+                        color: bar.monitor?.activeWorkspace?.id === modelData.id ? root.colors.cSelection : "transparent"
+                        Text { anchors.centerIn: parent; text: parent.modelData.name; color: root.fg; font.family: root.font; font.pixelSize: 11 }
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: root.panels.showPanel("audio", bar.screen, mapToItem(null, width, 0).x)
-                            onWheel: wheel => {
-                                Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", wheel.angleDelta.y > 0 ? "+5%" : "-5%"])
-                                audioDebounce.restart()
+                            onClicked: Hyprland.dispatch("workspace " + parent.modelData.id)
+                            onWheel: event => {
+                                const i = bar.workspaces.findIndex(w => w.id === bar.monitor?.activeWorkspace?.id)
+                                const next = Math.max(0, Math.min(bar.workspaces.length - 1, i + (event.angleDelta.y < 0 ? 1 : -1)))
+                                if (bar.workspaces[next]) Hyprland.dispatch("workspace " + bar.workspaces[next].id)
                             }
                         }
                     }
-
-                    Text {
-                        visible: !!root.microphone?.audio && root.microphone.audio.muted
-                        text: !root.microphone?.audio || root.microphone.audio.muted ? "\uf131" : "\uf130"
-                        font.family: root.font; font.pixelSize: 13
-                        color: !root.microphone?.audio ? root.dim : root.microphone.audio.muted ? root.warn : root.fg
-                        MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("audio", bar.screen, mapToItem(null, width, 0).x) }
-                    }
-
-                    RowLayout {
-                        visible: root.batPresent || root.panels.battery?.isPresent || root.panels.batteryPresent
-                        spacing: 4
-                        Ico { text: root.batIcon(); color: (root.panels.batteryPresent ? root.panels.batteryPercent : root.batPercent) <= 15 && !root.batCharging ? root.warn : root.batCharging ? root.accent : root.fg }
-                        Text { text: (root.panels.battery?.isPresent ? Math.round(root.panels.battery.percentage * 100) : root.panels.batteryPresent ? root.panels.batteryPercent : root.batPercent) + "%"; color: root.fg; font.family: root.font; font.pixelSize: 11 }
-                        MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("battery", bar.screen, mapToItem(null, width, 0).x) }
-                    }
-
-                    Rectangle {
-                        implicitWidth: 28
-                        implicitHeight: 24
-                        radius: 4
-                        color: controlMouse.containsMouse ? root.colors.cSelection : "transparent"
-                        Text { anchors.centerIn: parent; text: "\uf1de"; color: root.dim; font.family: root.font; font.pixelSize: 12 }
-                        MouseArea { id: controlMouse; anchors.fill: parent; hoverEnabled: true; onClicked: root.controlCenter.toggleOn(bar.screen) }
-                    }
                 }
-
                 Rectangle {
-                    anchors.centerIn: parent
-                    width: centeredClock.implicitWidth + 12
-                    height: 24
-                    radius: 4
-                    color: root.bg
-                    z: 1
-
-                    Text {
-                        id: centeredClock
-                        anchors.centerIn: parent
-                        text: bar.width < 1100
-                            ? Qt.formatTime(clock.date, "HH:mm")
-                            : Qt.formatDateTime(clock.date, "ddd d · HH:mm")
-                        color: root.fg
-                        font.family: root.font
-                        font.pixelSize: 12
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: root.panels.showPanel("calendar", bar.screen, bar.width / 2)
+                    Layout.fillHeight: true
+                    implicitWidth: 52
+                    color: "transparent"
+                    Text { anchors.centerIn: parent; text: Qt.formatTime(clock.date, "HH:mm"); color: root.fg; font.family: root.font; font.pixelSize: 11; horizontalAlignment: Text.AlignHCenter }
+                    MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("calendar", bar.screen, mapToItem(null, width / 2, 0).x) }
+                }
+                Item { Layout.fillWidth: true }
+                Rectangle {
+                    Layout.fillHeight: true; implicitWidth: 40; color: "transparent"
+                    Text { anchors.centerIn: parent; text: root.ethernetUp ? "ETH" : root.wifiUp ? "WIFI" : "OFF"; color: root.dim; font.family: root.font; font.pixelSize: 9 }
+                    MouseArea { anchors.fill: parent; onClicked: root.controlCenter.toggleOn(bar.screen) }
+                }
+                Rectangle {
+                    Layout.fillHeight: true; implicitWidth: 48; color: "transparent"
+                    Text { anchors.centerIn: parent; text: (root.muted ? "\uf6a9" : "\uf028") + " " + root.volume + "%"; color: root.fg; font.family: root.font; font.pixelSize: 10; horizontalAlignment: Text.AlignHCenter }
+                    MouseArea { anchors.fill: parent; onClicked: root.controlCenter.toggleOn(bar.screen) }
+                }
+                Rectangle {
+                    Layout.fillHeight: true; implicitWidth: 42; color: "transparent"
+                    Text { anchors.centerIn: parent; text: root.panels.battery?.isPresent ? Math.round(root.panels.battery.percentage * 100) + "%" : "--"; color: root.panels.battery?.percentage < 0.2 ? root.warn : root.fg; font.family: root.font; font.pixelSize: 10 }
+                    MouseArea { anchors.fill: parent; onClicked: root.controlCenter.toggleOn(bar.screen) }
+                }
+                Repeater {
+                    model: SystemTray.items
+                    delegate: MouseArea {
+                        required property var modelData
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: 22; implicitHeight: 20
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.LeftButton && !modelData.onlyMenu) modelData.activate()
+                            else if (modelData.hasMenu) {
+                                const p = mapToItem(null, mouse.x, mouse.y)
+                                modelData.display(bar, p.x, p.y)
+                            }
+                        }
+                        IconImage { anchors.centerIn: parent; implicitSize: 16; source: parent.modelData.icon }
                     }
                 }
             }
-        }
-    }
-
-    Variants {
-        model: Quickshell.screens
-        PanelWindow {
-            id: caffeineSurface
-            required property var modelData
-            screen: modelData
-            visible: root.caffeine
-            anchors.bottom: true
-            implicitWidth: 1
-            implicitHeight: 1
-            exclusiveZone: 0
-            exclusionMode: ExclusionMode.Ignore
-            color: "transparent"
-            mask: Region {}
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-            IdleInhibitor { window: caffeineSurface; enabled: root.caffeine }
         }
     }
 }
