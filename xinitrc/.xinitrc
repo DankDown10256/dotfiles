@@ -1,4 +1,5 @@
 setxkbmap fr
+export GPUI_X11_SCALE_FACTOR=1
 
 pipewire &
 pipewire-pulse &
