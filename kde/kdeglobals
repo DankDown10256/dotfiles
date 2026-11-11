@@ -137,7 +137,6 @@ ColorSchemeHash=27363f5706202c1c8261fbda7381ddaab8ad48f3
 
 [KDE]
 AnimationDurationFactor=0.25
-DefaultDarkLookAndFeel=org.kde.oxygen
 LookAndFeelPackage=org.kde.breezedark.desktop
 contrast=4
 frameContrast=0.2

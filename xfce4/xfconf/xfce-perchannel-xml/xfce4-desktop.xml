@@ -12,7 +12,12 @@
     <property name="screen0" type="empty">
       <property name="monitoreDP-1" type="empty">
         <property name="workspace0" type="empty">
-          <property name="last-image" type="string" value="/home/lucas/windows_tux.png"/>
+          <property name="last-image" type="string" value="/home/lucas/cerf.jpg"/>
+        </property>
+      </property>
+      <property name="monitorHDMI-2" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="last-image" type="string" value="/home/lucas/cerf.jpg"/>
         </property>
       </property>
     </property>
