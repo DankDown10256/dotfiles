@@ -1,0 +1,63 @@
+
+general {
+    colors = true
+    interval = 5
+}
+
+order += "ipv6"
+order += "cpu_temperature 0"
+order += "disk /"
+order += "wireless _first_"
+order += "ethernet _first_"
+order += "volume master"
+order += "memory"
+order += "battery 0"
+order += "tztime local"
+
+ipv6 {
+    format_up = "Useless Protocol: %ipv6"
+    format_down = "Useless Protocol: Down"
+}
+
+cpu_temperature 0 {
+    format = "CPU: %degrees °C"
+}
+
+disk "/" {
+    format = "Disk: %avail"
+}
+
+wireless _first_ {
+    format_up = "W: (%quality) IP: %ip"
+    format_down = "W: down"
+}
+
+ethernet _first_ {
+    format_up = "E: %ip (%speed)"
+    format_down = "E: down"
+}
+
+volume master {
+    format = "VOL: %volume"
+    format_muted = "VOL: muted"
+    device = "pulse"
+}
+
+memory {
+    format = "RAM: %used / %total"
+    memory_used_method = "classical"
+    threshold_degraded = "10%"
+    format_degraded = "RAM: %used / %total"
+}
+
+battery 0 {
+    format = "BAT: %percentage"
+    path = "/sys/class/power_supply/BAT%d/uevent"
+    last_full_capacity = true
+    integer_battery_capacity = true
+}
+
+tztime local {
+    format = "%Y-%m-%d %H:%M:%S"
+}
+
