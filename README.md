@@ -5,3 +5,9 @@ These are my dotfiles, on this repo you will see all kinds of dotfiles I use fro
 All my setup is made for my dev productivity, that's why I mostly choose WM than DE or anything else. This setup is not made to be beautiful or anything like that it's minimalist and efficient.
 
 Please don't make any pull request but issues are welcome.
+
+
+In this repo you can find my [wallpapers](./walls/) too, here's some:
+
+![wallpapers](./walls/cerf.jpg) 
+![wallpapers](./walls/kurwa.jpg) 
