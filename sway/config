@@ -1,4 +1,6 @@
 
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+
 ### Variables
 
 set $mod Mod1
