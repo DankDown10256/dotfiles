@@ -225,7 +225,89 @@ Scope {
         onTriggered: briProc.running = true
     }
 
-    SystemClock { id: clock; precision: SystemClock.Minutes }
+    property string ipv6Status: "Useless Protocol: Down"
+    property string cpuStatus: "CPU: -- °C"
+    property string diskStatus: "Disk: --"
+    property string wifiStatus: "W: down"
+    property string ethernetStatus: "E: down"
+    property string memoryStatus: "RAM: -- / --"
+    property string dateStatus: ""
+
+    Process {
+        id: statusProc
+        command: ["sh", "-c", `
+            ipv6=$(ip -6 -o addr show scope global 2>/dev/null |
+                awk 'NR == 1 { split($4, a, "/"); print a[1] }')
+            printf '%s\\n' "\${ipv6:-Down}"
+
+            cpu=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+            if [ -n "$cpu" ]; then
+                awk -v temp="$cpu" 'BEGIN { printf "%.0f\\n", temp / 1000 }'
+            else
+                printf '%s\\n' "--"
+            fi
+
+            df -h / 2>/dev/null | awk 'NR == 2 { print $4 }'
+
+            wifi=$(nmcli -t -f DEVICE,TYPE device status 2>/dev/null |
+                awk -F: '$2 == "wifi" { print $1; exit }')
+            wifi_ip=$(ip -4 -o addr show dev "$wifi" 2>/dev/null |
+                awk 'NR == 1 { split($4, a, "/"); print a[1] }')
+            if [ -n "$wifi_ip" ]; then
+                quality=$(nmcli -t -f IN-USE,SIGNAL device wifi list ifname "$wifi" 2>/dev/null |
+                    awk -F: '$1 == "*" { print $2; exit }')
+                printf 'W: (%s%%) IP: %s\\n' "\${quality:---}" "$wifi_ip"
+            else
+                printf '%s\\n' "W: down"
+            fi
+
+            ethernet=$(nmcli -t -f DEVICE,TYPE device status 2>/dev/null |
+                awk -F: '$2 == "ethernet" { print $1; exit }')
+            ethernet_ip=$(ip -4 -o addr show dev "$ethernet" 2>/dev/null |
+                awk 'NR == 1 { split($4, a, "/"); print a[1] }')
+            if [ -n "$ethernet_ip" ]; then
+                speed=$(cat "/sys/class/net/$ethernet/speed" 2>/dev/null)
+                printf 'E: %s (%s Mbit/s)\\n' "$ethernet_ip" "\${speed:---}"
+            else
+                printf '%s\\n' "E: down"
+            fi
+
+            awk '
+                /^MemTotal:/ { total = $2 }
+                /^MemFree:/ { free = $2 }
+                /^Buffers:/ { buffers = $2 }
+                /^Cached:/ { cached = $2 }
+                END {
+                    printf "%.1f GiB / %.1f GiB\\n",
+                        (total - free - buffers - cached) / 1048576,
+                        total / 1048576
+                }
+            ' /proc/meminfo
+        `]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split("\n")
+                if (lines.length < 6) return
+                root.ipv6Status = "Useless Protocol: " + lines[0]
+                root.cpuStatus = "CPU: " + lines[1] + " °C"
+                root.diskStatus = "Disk: " + lines[2]
+                root.wifiStatus = lines[3]
+                root.ethernetStatus = lines[4]
+                root.memoryStatus = "RAM: " + lines[5]
+            }
+        }
+    }
+
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            root.dateStatus = Qt.formatDateTime(new Date(), "yyyy-MM-dd HH:mm:ss")
+            if (!statusProc.running) statusProc.running = true
+        }
+    }
 
     readonly property var player: {
         const l = Mpris.players.values;
@@ -251,7 +333,7 @@ Scope {
             anchors { bottom: true; left: true; right: true }
             implicitHeight: 20
             exclusiveZone: root.barVisible ? implicitHeight : 0
-            color: root.bg
+            color: "#000000"
 
             readonly property var monitor: Hyprland.monitors.values.find(m => m.name === screen.name)
             readonly property var workspaces: Hyprland.workspaces.values
@@ -267,8 +349,10 @@ Scope {
                         required property var modelData
                         Layout.fillHeight: true
                         implicitWidth: 28
-                        color: bar.monitor?.activeWorkspace?.id === modelData.id ? root.colors.cSelection : "transparent"
-                        Text { anchors.centerIn: parent; text: parent.modelData.name; color: root.fg; font.family: root.font; font.pixelSize: 11 }
+                        color: bar.monitor?.activeWorkspace?.id === modelData.id ? "#285577" : "#222222"
+                        border.width: 1
+                        border.color: bar.monitor?.activeWorkspace?.id === modelData.id ? "#4c7899" : "#333333"
+                        Text { anchors.centerIn: parent; text: parent.modelData.name; color: "#ffffff"; font.family: root.font; font.pixelSize: 11 }
                         MouseArea {
                             anchors.fill: parent
                             onClicked: Hyprland.dispatch("workspace " + parent.modelData.id)
@@ -280,28 +364,52 @@ Scope {
                         }
                     }
                 }
-                Rectangle {
-                    Layout.fillHeight: true
-                    implicitWidth: 52
-                    color: "transparent"
-                    Text { anchors.centerIn: parent; text: Qt.formatTime(clock.date, "HH:mm"); color: root.fg; font.family: root.font; font.pixelSize: 11; horizontalAlignment: Text.AlignHCenter }
-                    MouseArea { anchors.fill: parent; onClicked: root.panels.showPanel("calendar", bar.screen, mapToItem(null, width / 2, 0).x) }
-                }
                 Item { Layout.fillWidth: true }
-                Rectangle {
-                    Layout.fillHeight: true; implicitWidth: 40; color: "transparent"
-                    Text { anchors.centerIn: parent; text: root.ethernetUp ? "ETH" : root.wifiUp ? "WIFI" : "OFF"; color: root.dim; font.family: root.font; font.pixelSize: 9 }
-                    MouseArea { anchors.fill: parent; onClicked: root.controlCenter.toggleOn(bar.screen) }
-                }
-                Rectangle {
-                    Layout.fillHeight: true; implicitWidth: 48; color: "transparent"
-                    Text { anchors.centerIn: parent; text: (root.muted ? "\uf6a9" : "\uf028") + " " + root.volume + "%"; color: root.fg; font.family: root.font; font.pixelSize: 10; horizontalAlignment: Text.AlignHCenter }
-                    MouseArea { anchors.fill: parent; onClicked: root.controlCenter.toggleOn(bar.screen) }
-                }
-                Rectangle {
-                    Layout.fillHeight: true; implicitWidth: 42; color: "transparent"
-                    Text { anchors.centerIn: parent; text: root.panels.battery?.isPresent ? Math.round(root.panels.battery.percentage * 100) + "%" : "--"; color: root.panels.battery?.percentage < 0.2 ? root.warn : root.fg; font.family: root.font; font.pixelSize: 10 }
-                    MouseArea { anchors.fill: parent; onClicked: root.controlCenter.toggleOn(bar.screen) }
+                Repeater {
+                    model: [
+                        { text: root.ipv6Status, action: "" },
+                        { text: root.cpuStatus, action: "" },
+                        { text: root.diskStatus, action: "" },
+                        { text: root.wifiStatus, action: "control" },
+                        { text: root.ethernetStatus, action: "control" },
+                        { text: root.muted ? "VOL: muted" : "VOL: " + root.volume + "%", action: "control" },
+                        { text: root.memoryStatus, action: "" },
+                        { text: "BAT: " + (root.panels.battery?.isPresent ? Math.round(root.panels.battery.percentage * 100) + "%" : "--"), action: "control" },
+                        { text: root.dateStatus, action: "calendar" }
+                    ]
+                    delegate: Rectangle {
+                        required property var modelData
+                        required property int index
+                        Layout.fillHeight: true
+                        implicitWidth: statusText.implicitWidth + 16
+                        color: "transparent"
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 1
+                            height: 12
+                            color: "#666666"
+                            visible: parent.index > 0
+                        }
+                        Text {
+                            id: statusText
+                            anchors.centerIn: parent
+                            text: parent.modelData.text
+                            color: parent.index === 7 && root.panels.battery?.percentage < 0.2 ? "#ff0000" : "#ffffff"
+                            font.family: root.font
+                            font.pixelSize: 10
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (parent.modelData.action === "control")
+                                    root.controlCenter.toggleOn(bar.screen)
+                                else if (parent.modelData.action === "calendar")
+                                    root.panels.showPanel("calendar", bar.screen, mapToItem(null, width / 2, 0).x)
+                            }
+                        }
+                    }
                 }
                 Repeater {
                     model: SystemTray.items

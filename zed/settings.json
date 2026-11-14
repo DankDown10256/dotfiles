@@ -3,6 +3,7 @@
     "show": "always"
   },
   "project_panel": {
+    "dock": "right",
     "sort_order": "default",
     "diagnostic_badges": false,
     "git_status_indicator": true,
@@ -30,7 +31,7 @@
   "base_keymap": "VSCode",
   "icon_theme": {
     "mode": "light",
-    "light": "Material Icon Theme",
+    "light": "JetBrains Icons Dark",
     "dark": "Zed (Default)"
   },
   "ui_font_size": 14,
