@@ -4,6 +4,7 @@ path=(
   "$HOME/.local/bin"
   "$HOME/.opencode/bin"
   "$HOME/.rbenv/bin"
+  "$HOME/.cargo/bin"
   $path
 )
 export PATH

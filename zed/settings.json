@@ -30,7 +30,7 @@
   "vim_mode": true,
   "base_keymap": "VSCode",
   "icon_theme": {
-    "mode": "light",
+    "mode": "dark",
     "light": "JetBrains Icons Dark",
     "dark": "Zed (Default)"
   },

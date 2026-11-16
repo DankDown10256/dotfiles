@@ -27,7 +27,7 @@ default_floating_border none
 
 ### Output
 
-output * bg ~/cerf.jpg fill
+output * bg ~/penger_xp.jpg fill
 
 ### Input
 
