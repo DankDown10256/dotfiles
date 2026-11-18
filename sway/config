@@ -27,7 +27,7 @@ default_floating_border none
 
 ### Output
 
-output * bg ~/penger_xp.jpg fill
+output * bg ~/penger_sway.jpg fill
 
 ### Input
 
